@@ -20,38 +20,38 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
   const defaultTagline = isPro
     ? 'For property professionals ready to streamline operations'
     : isPrime
-    ? 'For property managers starting out with core operational tools'
-    : 'For enterprise portfolio leaders needing custom scale & SLA support';
+      ? 'For property managers starting out with core operational tools'
+      : 'For enterprise portfolio leaders needing custom scale & SLA support';
 
   const defaultUnitRange = isPro
     ? '1,000 - 15,000 Units'
     : isPrime
-    ? 'Up to 1,000 Units'
-    : '15,000+ Units';
+      ? 'Up to 1,000 Units'
+      : '15,000+ Units';
 
   const defaultMinimumText = isPro
     ? '$ 2,000 monthly min. | 1,000 - door minimum'
     : isPrime
-    ? '$ 500 monthly min. | 250 - door minimum'
-    : 'Custom monthly min. | Enterprise SLA';
+      ? '$ 500 monthly min. | 250 - door minimum'
+      : 'Custom monthly min. | Enterprise SLA';
 
   const defaultTargetAudience = isPro
     ? 'Best for owners and portfolio leaders who want complete visibility and accountability.'
     : isPrime
-    ? 'Best for independent operators needing essential tracking & work orders.'
-    : 'Best for large institutional portfolio leaders requiring dedicated infrastructure & API access.';
+      ? 'Best for independent operators needing essential tracking & work orders.'
+      : 'Best for large institutional portfolio leaders requiring dedicated infrastructure & API access.';
 
   const defaultFooterTagline = isPro
     ? 'Track Every Project . Verify Every Outcome'
     : isPrime
-    ? 'Streamline Operations . Build Efficiency'
-    : 'Empower Scale . Enterprise Security';
+      ? 'Streamline Operations . Build Efficiency'
+      : 'Empower Scale . Enterprise Security';
 
   const defaultCtaText = isPro
     ? 'Go Pro'
     : isPrime
-    ? 'Select Prime'
-    : 'Contact Enterprise';
+      ? 'Select Prime'
+      : 'Contact Enterprise';
 
   const tagline = plan.tagline || defaultTagline;
   const unitRange = plan.unitRange || defaultUnitRange;
@@ -94,7 +94,7 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
 
           {/* Title & Tagline */}
           <div className="text-center space-y-1">
-            <h3 className="text-2xl font-extrabold italic tracking-tight text-white uppercase">
+            <h3 className="text-2xl font-medium italic tracking-tight text-white uppercase">
               {plan.title}
             </h3>
             <p className="text-xs text-purple-100 font-normal italic max-w-xs mx-auto">
@@ -103,7 +103,7 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
 
             {/* Price */}
             <div className="pt-3 pb-1">
-              <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <span className="text-3xl sm:text-4xl font-medium text-white tracking-tight">
                 ${formattedPrice}
               </span>
               <p className="text-xs text-purple-200 font-medium mt-0.5">
@@ -253,4 +253,4 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
     </div>
   );
 }
-
+

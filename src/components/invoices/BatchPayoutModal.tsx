@@ -26,7 +26,7 @@ export default function BatchPayoutModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5 border border-gray-200 animate-in zoom-in-95 duration-150">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 pb-3.5">
           <div className="flex items-center gap-2.5">
@@ -61,7 +61,7 @@ export default function BatchPayoutModal({
 
           <div className="flex justify-between items-center text-xs border-t border-purple-100/80 pt-2">
             <span className="text-gray-600 font-medium">Total Payout Amount:</span>
-            <span className="text-base font-extrabold text-emerald-600">
+            <span className="text-base font-medium text-emerald-600">
               ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>

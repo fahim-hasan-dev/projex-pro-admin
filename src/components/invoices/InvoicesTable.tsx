@@ -179,15 +179,14 @@ export default function InvoicesTable({
                       </td>
                       <td className="py-4 px-5">
                         <span
-                          className={`px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 w-fit ${
-                            item.status === "Paid"
+                          className={`px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 w-fit ${item.status === "Paid"
                               ? "bg-emerald-100 text-emerald-700"
                               : item.status === "Overdue"
-                              ? "bg-red-100 text-red-700"
-                              : item.status === "Billed"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
+                                ? "bg-red-100 text-red-700"
+                                : item.status === "Billed"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-amber-100 text-amber-800"
+                            }`}
                         >
                           {item.status === "Paid" && <CheckCircle2 className="w-3 h-3" />}
                           {item.status === "Overdue" && <XCircle className="w-3 h-3" />}
@@ -213,9 +212,9 @@ export default function InvoicesTable({
                       checked={
                         selectedVendorIds.length > 0 &&
                         selectedVendorIds.length ===
-                          vendorPayments.filter(
-                            (v) => v.status === "Pending Payout" || v.status === "Processing"
-                          ).length
+                        vendorPayments.filter(
+                          (v) => v.status === "Pending Payout" || v.status === "Processing"
+                        ).length
                       }
                       onChange={handleSelectAllVendors}
                       className="rounded border-gray-300 text-[#8E25E3] focus:ring-[#8E25E3]/40 cursor-pointer"
@@ -244,9 +243,8 @@ export default function InvoicesTable({
                     return (
                       <tr
                         key={item.id}
-                        className={`transition-colors ${
-                          isSelected ? "bg-purple-50/40" : "hover:bg-gray-50"
-                        }`}
+                        className={`transition-colors ${isSelected ? "bg-purple-50/40" : "hover:bg-gray-50"
+                          }`}
                       >
                         <td className="py-4 px-5">
                           <input
@@ -276,15 +274,14 @@ export default function InvoicesTable({
                         </td>
                         <td className="py-4 px-5">
                           <span
-                            className={`px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 w-fit ${
-                              item.status === "Paid"
+                            className={`px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 w-fit ${item.status === "Paid"
                                 ? "bg-emerald-100 text-emerald-700"
                                 : item.status === "Pending Payout"
-                                ? "bg-amber-100 text-amber-800"
-                                : item.status === "Processing"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
+                                  ? "bg-amber-100 text-amber-800"
+                                  : item.status === "Processing"
+                                    ? "bg-blue-100 text-blue-700"
+                                    : "bg-red-100 text-red-700"
+                              }`}
                           >
                             {item.status === "Paid" && <CheckCircle2 className="w-3 h-3" />}
                             {item.status === "Pending Payout" && <Clock className="w-3 h-3" />}
@@ -334,7 +331,7 @@ export default function InvoicesTable({
                         ${item.totalJobAmount.toLocaleString()}
                       </td>
                       <td className="py-4 px-5">
-                        <div className="font-extrabold text-emerald-600 text-sm flex items-center gap-1">
+                        <div className="font-medium text-emerald-600 text-sm flex items-center gap-1">
                           <span>+${item.platformCommission.toFixed(2)}</span>
                           <span className="text-[10px] font-semibold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
                             ({item.commissionRate})
@@ -349,11 +346,10 @@ export default function InvoicesTable({
                       </td>
                       <td className="py-4 px-5">
                         <span
-                          className={`px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 w-fit ${
-                            item.status === "Collected" || item.status === "Completed"
+                          className={`px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 w-fit ${item.status === "Collected" || item.status === "Completed"
                               ? "bg-emerald-100 text-emerald-700"
                               : "bg-amber-100 text-amber-800"
-                          }`}
+                            }`}
                         >
                           <CheckCircle2 className="w-3 h-3" />
                           {item.status}
@@ -411,13 +407,12 @@ export default function InvoicesTable({
                       </td>
                       <td className="py-4 px-5">
                         <span
-                          className={`px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 w-fit ${
-                            item.status === "Active Subscriptions"
+                          className={`px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 w-fit ${item.status === "Active Subscriptions"
                               ? "bg-emerald-100 text-emerald-700"
                               : item.status === "Trial Periods"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
                         >
                           {item.status === "Active Subscriptions" && <CheckCircle2 className="w-3 h-3" />}
                           {item.status === "Trial Periods" && <Clock className="w-3 h-3" />}

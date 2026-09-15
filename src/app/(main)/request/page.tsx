@@ -1,33 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { FilterTab } from "@/components/maintenance-requests/types";
 import {
-  FilterTab,
-  initialRequestsList,
   JobStatus,
   PriorityLevel,
   ServiceCategory,
   ServiceRequestItem,
-} from "@/components/maintenance-requests/types";
+  getStoredRequests,
+  subscribeToRequests,
+  assignServiceRequest,
+  createServiceRequest,
+} from "@/types/serviceRequestStore";
 import MaintenanceRequestsHeader from "@/components/maintenance-requests/MaintenanceRequestsHeader";
 import MaintenanceRequestsStats from "@/components/maintenance-requests/MaintenanceRequestsStats";
 import MaintenanceRequestsFilterBar from "@/components/maintenance-requests/MaintenanceRequestsFilterBar";
 import MaintenanceRequestsTable from "@/components/maintenance-requests/MaintenanceRequestsTable";
 import JobRateModal from "@/components/maintenance-requests/JobRateModal";
+import ViewRequestDetailsModal from "@/components/maintenance-requests/ViewRequestDetailsModal";
 import CreateServiceRequestModal from "@/components/maintenance-requests/CreateServiceRequestModal";
 
 export default function MaintenanceRequestsPage() {
-  const [requests, setRequests] = useState<ServiceRequestItem[]>(initialRequestsList);
-  const [activeTab, setActiveTab] = useState<FilterTab>("All Requests");
+  const [requests, setRequests] = useState<ServiceRequestItem[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("All Requests");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedJob, setSelectedJob] = useState<ServiceRequestItem | null>(null);
 
-  // Modal State for Specialized Rate
-  const [isSpecializedRateActive, setIsSpecializedRateActive] = useState<boolean>(false);
-  const [paymentType, setPaymentType] = useState<"Percentage" | "Flat Amount">("Percentage");
-  const [rateValue, setRateValue] = useState<string>("");
-  const [selectedReason, setSelectedReason] = useState<string>("");
+  // Modals
+  const [selectedJobForAssign, setSelectedJobForAssign] = useState<ServiceRequestItem | null>(null);
+  const [selectedJobForDetails, setSelectedJobForDetails] = useState<ServiceRequestItem | null>(null);
   const [assignedContractor, setAssignedContractor] = useState<string>("");
 
   // New Request Modal State
@@ -38,71 +39,42 @@ export default function MaintenanceRequestsPage() {
   const [newPriority, setNewPriority] = useState<PriorityLevel>("Medium");
   const [newBasePay, setNewBasePay] = useState<number>(200);
 
+  useEffect(() => {
+    setRequests(getStoredRequests());
+    const unsubscribe = subscribeToRequests((updated) => {
+      setRequests(updated);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Open Job Modal Handler
   const handleOpenJobModal = (job: ServiceRequestItem) => {
-    setSelectedJob(job);
-    setAssignedContractor(job.contractor);
-    setIsSpecializedRateActive(job.isSpecialized || !!job.rateBonus);
-    if (job.rateBonus) {
-      if (job.rateBonus.includes("%")) {
-        setPaymentType("Percentage");
-      } else {
-        setPaymentType("Flat Amount");
-      }
-      setRateValue(job.rateBonus.replace(/[^0-9.]/g, ""));
-    } else {
-      setRateValue("");
-    }
-    setSelectedReason("");
+    setSelectedJobForAssign(job);
+    setAssignedContractor(job.contractor || "Unassigned");
   };
 
-  const handleSaveJob = (updatedJob: {
-    status: JobStatus;
-    etaDate: string;
-    contractor: string;
+  // Open Details Modal Handler
+  const handleOpenDetailsModal = (job: ServiceRequestItem) => {
+    setSelectedJobForDetails(job);
+  };
+
+  // Save Assignment & Review Handler
+  const handleSaveJobAssignment = (updatedFields: {
+    serviceCategory: ServiceCategory;
+    issueTitle: string;
+    serviceDate: string;
     basePay: number;
-    isSpecialized: boolean;
-    paymentType: "Percentage" | "Flat Amount";
-    rateValue: string;
-    selectedReason: string;
+    additionalFee: number;
+    contractor: string;
   }) => {
-    if (!selectedJob) return;
+    if (!selectedJobForAssign) return;
 
-    let bonusStr: string | undefined = undefined;
-    let finalPay = updatedJob.basePay;
-
-    if (updatedJob.isSpecialized && updatedJob.rateValue) {
-      const valNum = parseFloat(updatedJob.rateValue) || 0;
-      if (updatedJob.paymentType === "Percentage") {
-        bonusStr = `+${valNum}%`;
-        finalPay = updatedJob.basePay + (updatedJob.basePay * valNum) / 100;
-      } else {
-        bonusStr = `+$${valNum}`;
-        finalPay = updatedJob.basePay + valNum;
-      }
-    }
-
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === selectedJob.id
-          ? {
-              ...r,
-              status: updatedJob.status,
-              etaDate: updatedJob.etaDate,
-              contractor: updatedJob.contractor,
-              basePay: updatedJob.basePay,
-              isSpecialized: updatedJob.isSpecialized,
-              rateBonus: bonusStr,
-              finalPayCalculated: updatedJob.isSpecialized ? finalPay : undefined,
-            }
-          : r
-      )
-    );
-
-    toast.success(`Job ${selectedJob.id} updated successfully!`);
-    setSelectedJob(null);
+    assignServiceRequest(selectedJobForAssign.id, updatedFields);
+    toast.success(`Job ${selectedJobForAssign.id} updated & assigned to ${updatedFields.contractor}!`);
+    setSelectedJobForAssign(null);
   };
 
+  // Super Admin Create New Request
   const handleCreateNewRequest = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProperty || !newIssue) {
@@ -110,25 +82,17 @@ export default function MaintenanceRequestsPage() {
       return;
     }
 
-    const newId = `SR-${Math.floor(1299 + Math.random() * 100)}`;
-    const newReq: ServiceRequestItem = {
-      id: newId,
-      date: "Jun 25, 2026",
+    const created = createServiceRequest({
       property: newProperty,
       address: `${newProperty}, Unit 1A`,
       issue: newIssue,
       type: newType,
-      contractor: "Unassigned",
       priority: newPriority,
-      status: "Pending",
       basePay: newBasePay,
-      notes: "Newly submitted maintenance request.",
-      etaDate: "Jun 28, 2026",
-      isSpecialized: false,
-    };
+      notes: "Submitted via Super Admin dashboard.",
+    });
 
-    setRequests([newReq, ...requests]);
-    toast.success(`New request ${newId} created!`);
+    toast.success(`New service request ${created.id} created!`);
     setShowNewRequestModal(false);
     setNewProperty("");
     setNewIssue("");
@@ -144,7 +108,8 @@ export default function MaintenanceRequestsPage() {
 
     let matchesTab = true;
     if (activeTab === "Pending") matchesTab = r.status === "Pending";
-    else if (activeTab === "In Progress") matchesTab = r.status === "In Progress" || r.status === "Assigned";
+    else if (activeTab === "In Progress") matchesTab = r.status === "In Progress" || r.status === "Accepted" || r.status === "Assigned";
+    else if (activeTab === "Reassignment") matchesTab = r.status === "Reassignment Requested" || !!r.declineReason;
     else if (activeTab === "Scheduled") matchesTab = r.status === "Assigned";
     else if (activeTab === "Completed") matchesTab = r.status === "Completed";
     else if (activeTab === "Cancelled") matchesTab = r.status === "Cancelled";
@@ -158,38 +123,38 @@ export default function MaintenanceRequestsPage() {
       <MaintenanceRequestsHeader onOpenNewRequest={() => setShowNewRequestModal(true)} />
 
       {/* Stats Cards */}
-      <MaintenanceRequestsStats requests={requests} />
+      <MaintenanceRequestsStats requests={requests as any} />
 
       {/* Filter Tabs & Search Bar */}
       <MaintenanceRequestsFilterBar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        activeTab={activeTab as FilterTab}
+        setActiveTab={setActiveTab as any}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        requests={requests}
+        requests={requests as any}
       />
 
       {/* Table */}
       <MaintenanceRequestsTable
         requests={filteredRequests}
         handleOpenJobModal={handleOpenJobModal}
+        handleOpenDetailsModal={handleOpenDetailsModal}
       />
 
-      {/* Job & Specialized Rate Modal */}
+      {/* Job & Provider Assignment Modal */}
       <JobRateModal
-        job={selectedJob}
-        onClose={() => setSelectedJob(null)}
-        onSave={handleSaveJob}
+        job={selectedJobForAssign}
+        onClose={() => setSelectedJobForAssign(null)}
+        onSave={handleSaveJobAssignment}
         assignedContractor={assignedContractor}
         setAssignedContractor={setAssignedContractor}
-        isSpecializedRateActive={isSpecializedRateActive}
-        setIsSpecializedRateActive={setIsSpecializedRateActive}
-        paymentType={paymentType}
-        setPaymentType={setPaymentType}
-        rateValue={rateValue}
-        setRateValue={setRateValue}
-        selectedReason={selectedReason}
-        setSelectedReason={setSelectedReason}
+      />
+
+      {/* Comprehensive View Details Modal */}
+      <ViewRequestDetailsModal
+        job={selectedJobForDetails}
+        onClose={() => setSelectedJobForDetails(null)}
+        onOpenAssignModal={handleOpenJobModal}
       />
 
       {/* Create New Service Request Modal */}
@@ -211,4 +176,3 @@ export default function MaintenanceRequestsPage() {
     </div>
   );
 }
-

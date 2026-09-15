@@ -219,7 +219,7 @@ export default function InvoiceDetailModal({
                   ? "Deposit Amount"
                   : "Final Balance Due"}
             </span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-[#7C3AED]">
+            <span className="text-2xl sm:text-3xl font-medium text-[#7C3AED]">
               {isPaid
                 ? fmt(invoice.totalAmount)
                 : isDeposit
