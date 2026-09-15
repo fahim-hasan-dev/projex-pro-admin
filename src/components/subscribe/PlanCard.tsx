@@ -1,8 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Users } from 'lucide-react';
-import { useState } from 'react';
+import React from 'react';
+import { Check, Edit2, Trash2, ArrowRight } from 'lucide-react';
 import { Plan } from './types';
 
 interface PlanCardProps {
@@ -12,109 +11,246 @@ interface PlanCardProps {
 }
 
 export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
-  const [selectedCycle, setSelectedCycle] = useState<'month' | 'year' | 'free'>(
-    plan.planPrices.find(p => p.type === 'month') ? 'month' : 
-    plan.planPrices.find(p => p.type === 'year') ? 'year' : 'free'
-  );
+  const isPro = plan.title.toLowerCase().includes('pro');
+  const isPrime = plan.title.toLowerCase().includes('prime');
 
-  const getDisplayPrice = () => {
-    const priceObj = plan.planPrices.find(p => p.type === selectedCycle);
-    if (!priceObj) return { price: '0.00', cycleText: '' };
-    
-    const price = priceObj.price === 0 ? '0.00' : priceObj.price.toFixed(2);
-    const cycleText = selectedCycle === 'month' ? '/month' : 
-                     selectedCycle === 'year' ? '/year' : '';
-    
-    return { price, cycleText };
-  };
+  const priceObj = plan.planPrices.find(p => p.type === 'month') || plan.planPrices[0];
+  const formattedPrice = priceObj ? (priceObj.price === 0 ? '0.00' : priceObj.price.toFixed(2)) : '0.00';
 
-  const { price, cycleText } = getDisplayPrice();
+  const defaultTagline = isPro
+    ? 'For property professionals ready to streamline operations'
+    : isPrime
+    ? 'For property managers starting out with core operational tools'
+    : 'For enterprise portfolio leaders needing custom scale & SLA support';
 
-  const hasMultiplePrices = plan.planPrices.some(p => p.type === 'month' || p.type === 'year');
+  const defaultUnitRange = isPro
+    ? '1,000 - 15,000 Units'
+    : isPrime
+    ? 'Up to 1,000 Units'
+    : '15,000+ Units';
 
-  return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm flex flex-col h-full">
-      <div className="flex justify-center mb-4">
-        <Users size={32} className="text-gray-800" />
-      </div>
+  const defaultMinimumText = isPro
+    ? '$ 2,000 monthly min. | 1,000 - door minimum'
+    : isPrime
+    ? '$ 500 monthly min. | 250 - door minimum'
+    : 'Custom monthly min. | Enterprise SLA';
 
-      <h3 className="text-xl font-semibold text-center mb-4 capitalize">{plan.title}</h3>
+  const defaultTargetAudience = isPro
+    ? 'Best for owners and portfolio leaders who want complete visibility and accountability.'
+    : isPrime
+    ? 'Best for independent operators needing essential tracking & work orders.'
+    : 'Best for large institutional portfolio leaders requiring dedicated infrastructure & API access.';
 
-      {hasMultiplePrices && (
-        <div className="flex justify-center gap-2 mb-4">
-          {plan.planPrices.find(p => p.type === 'month') && (
-            <Button
-              onClick={() => setSelectedCycle('month')}
-              className={`px-4 py-1 text-sm rounded-full h-8 ${
-                selectedCycle === 'month'
-                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              Monthly
-            </Button>
-          )}
-          {plan.planPrices.find(p => p.type === 'year') && (
-            <Button
-              onClick={() => setSelectedCycle('year')}
-              className={`px-4 py-1 text-sm rounded-full h-8 ${
-                selectedCycle === 'year'
-                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              Yearly
-            </Button>
-          )}
-        </div>
-      )}
+  const defaultFooterTagline = isPro
+    ? 'Track Every Project . Verify Every Outcome'
+    : isPrime
+    ? 'Streamline Operations . Build Efficiency'
+    : 'Empower Scale . Enterprise Security';
 
-      <div className="text-center mb-6">
-        <span className="text-4xl font-bold text-blue-500">${price}</span>
-        {cycleText && <span className="text-blue-500 text-lg">{cycleText}</span>}
-      </div>
+  const defaultCtaText = isPro
+    ? 'Go Pro'
+    : isPrime
+    ? 'Select Prime'
+    : 'Contact Enterprise';
 
-      <div className="text-center mb-4">
-        <span className="text-sm text-gray-600">
-          {plan.participantCount} participants/event
-        </span>
-      </div>
+  const tagline = plan.tagline || defaultTagline;
+  const unitRange = plan.unitRange || defaultUnitRange;
+  const minimumText = plan.minimumText || defaultMinimumText;
+  const targetAudience = plan.targetAudience || defaultTargetAudience;
+  const footerTagline = plan.footerTagline || defaultFooterTagline;
+  const ctaText = plan.ctaText || defaultCtaText;
+  const pricePerUnit = plan.pricePerUnit || 'per unit / month';
 
-      <div className="space-y-3 mb-6 flex-1">
-        {plan.benefits.map((benefit: string, index: number) => (
-          <div key={index} className="flex items-start gap-2">
-            <svg
-              className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            <span className="text-sm text-gray-700">{benefit}</span>
+  if (isPro) {
+    // Featured Pro Card (Established Purple Theme)
+    return (
+      <div className="bg-gradient-to-b from-[#8E25E3] via-[#7b1fa2] to-[#5b1b95] text-white rounded-2xl p-6 shadow-md flex flex-col justify-between relative border border-purple-400/40 h-full hover:shadow-lg transition-all">
+        {/* Card Header & Admin Actions */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-xs text-white font-bold text-[10px] tracking-wider uppercase border border-white/30">
+              ✨ {plan.badgeText || 'MOST POPULAR'}
+            </span>
+
+            <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg border border-white/10">
+              <button
+                type="button"
+                onClick={() => onEdit(plan)}
+                title="Edit Plan"
+                className="p-1 text-white/80 hover:text-white rounded transition-colors cursor-pointer"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(plan)}
+                title="Delete Plan"
+                className="p-1 text-red-200 hover:text-red-100 rounded transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-        ))}
+
+          {/* Title & Tagline */}
+          <div className="text-center space-y-1">
+            <h3 className="text-2xl font-extrabold italic tracking-tight text-white uppercase">
+              {plan.title}
+            </h3>
+            <p className="text-xs text-purple-100 font-normal italic max-w-xs mx-auto">
+              {tagline}
+            </p>
+
+            {/* Price */}
+            <div className="pt-3 pb-1">
+              <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                ${formattedPrice}
+              </span>
+              <p className="text-xs text-purple-200 font-medium mt-0.5">
+                {pricePerUnit}
+              </p>
+            </div>
+
+            {/* Unit Range & Minimums */}
+            <div className="pt-1">
+              <span className="inline-block px-3 py-0.5 rounded-full bg-white/15 backdrop-blur-xs text-white font-semibold text-xs border border-white/20">
+                {unitRange}
+              </span>
+            </div>
+            <p className="text-[11px] text-purple-200/90 font-normal pt-1">
+              {minimumText}
+            </p>
+
+            {/* Target Audience */}
+            <p className="text-xs text-white/90 font-normal italic py-2.5 my-2 border-y border-white/20">
+              {targetAudience}
+            </p>
+          </div>
+
+          {/* Features */}
+          <div className="space-y-2 my-4">
+            {plan.benefits.map((benefit, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-left">
+                <Check className="w-3.5 h-3.5 text-white shrink-0 mt-0.5" />
+                <span className="text-xs text-white font-normal leading-snug">
+                  {benefit}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer & CTA */}
+        <div className="pt-3 border-t border-white/20 text-center space-y-3">
+          <p className="text-[11px] text-purple-100/90 italic font-medium">
+            {footerTagline}
+          </p>
+          <button
+            type="button"
+            onClick={() => onEdit(plan)}
+            className="w-full py-2.5 px-4 bg-white hover:bg-purple-50 text-[#8E25E3] font-bold text-xs rounded-xl shadow-2xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <span>{ctaText}</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Standard Plan Card (PRIME, ENTERPRISE, custom)
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between h-full hover:border-purple-300 transition-all text-gray-900">
+      {/* Card Header & Admin Actions */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-[#8E25E3] font-semibold text-[11px] border border-purple-200">
+            {plan.title} TIER
+          </span>
+
+          <div className="flex items-center gap-1 bg-gray-100/80 p-1 rounded-lg border border-gray-200">
+            <button
+              type="button"
+              onClick={() => onEdit(plan)}
+              title="Edit Plan"
+              className="p-1 text-gray-500 hover:text-gray-800 rounded transition-colors cursor-pointer"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(plan)}
+              title="Delete Plan"
+              className="p-1 text-red-500 hover:text-red-700 rounded transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Title & Tagline */}
+        <div className="text-center space-y-1">
+          <h3 className="text-2xl font-bold tracking-tight text-gray-900 uppercase">
+            {plan.title}
+          </h3>
+          <p className="text-xs text-gray-500 font-normal italic max-w-xs mx-auto">
+            {tagline}
+          </p>
+
+          {/* Price */}
+          <div className="pt-3 pb-1">
+            <span className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+              ${formattedPrice}
+            </span>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">
+              {pricePerUnit}
+            </p>
+          </div>
+
+          {/* Unit Range & Minimums */}
+          <div className="pt-1">
+            <span className="inline-block px-3 py-0.5 rounded-full bg-purple-50 text-[#8E25E3] font-semibold text-xs border border-purple-200">
+              {unitRange}
+            </span>
+          </div>
+          <p className="text-[11px] text-gray-500 font-normal pt-1">
+            {minimumText}
+          </p>
+
+          {/* Target Audience */}
+          <p className="text-xs text-gray-600 font-normal italic py-2.5 my-2 border-y border-gray-100">
+            {targetAudience}
+          </p>
+        </div>
+
+        {/* Features */}
+        <div className="space-y-2 my-4">
+          {plan.benefits.map((benefit, idx) => (
+            <div key={idx} className="flex items-start gap-2 text-left">
+              <Check className="w-3.5 h-3.5 text-[#8E25E3] shrink-0 mt-0.5" />
+              <span className="text-xs text-gray-700 font-medium leading-snug">
+                {benefit}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="flex gap-3">
-        <Button
-          onClick={() => onDelete(plan)}
-          className="flex-1 bg-red-50 hover:bg-red-100 text-red-500"
-        >
-          Delete
-        </Button>
-        <Button
+      {/* Footer & CTA */}
+      <div className="pt-3 border-t border-gray-100 text-center space-y-3">
+        <p className="text-[11px] text-gray-500 italic font-medium">
+          {footerTagline}
+        </p>
+        <button
+          type="button"
           onClick={() => onEdit(plan)}
-          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+          className="w-full py-2.5 px-4 bg-[#8E25E3] hover:bg-[#781dc6] text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          Edit
-        </Button>
+          <span>{ctaText}</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );
 }
+

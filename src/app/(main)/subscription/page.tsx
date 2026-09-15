@@ -23,55 +23,83 @@ import PlanCard from "@/components/subscribe/PlanCard";
 // Initial Demo Subscription Plans
 const defaultPlans: Plan[] = [
   {
-    _id: "plan-1",
-    title: "Starter Plan",
-    participantCount: 25,
+    _id: "plan-prime",
+    title: "PRIME",
+    tagline: "For property managers starting out with core operational tools",
+    pricePerUnit: "per unit / month",
+    unitRange: "Up to 1,000 Units",
+    minimumText: "$ 500 monthly min. | 250 - door minimum",
+    targetAudience: "Best for independent operators needing essential tracking & work orders.",
+    footerTagline: "Streamline Operations . Build Efficiency",
+    ctaText: "Select Prime",
+    participantCount: 1000,
     benefits: [
-      "Up to 25 Property Units",
-      "Standard Work Order Dispatch",
-      "Automated Monthly Billing",
-      "Email & In-App Support",
-      "Basic Performance Analytics",
+      "Essential Work Order & Ticket Management",
+      "Standard Tenant & Vendor Communication",
+      "Basic Invoice & Payment Processing",
+      "Automated Monthly Financial Reporting",
+      "Email & In-App Customer Support",
+      "Basic Portfolio Analytics Dashboard",
     ],
     planPrices: [
-      { type: "month", price: 199, priceId: "p_starter_mo" },
-      { type: "year", price: 1990, priceId: "p_starter_yr" },
+      { type: "month", price: 1.0, priceId: "p_prime_mo" },
+      { type: "year", price: 10.0, priceId: "p_prime_yr" },
     ],
     createdAt: "2026-01-15T00:00:00Z",
   },
   {
-    _id: "plan-2",
-    title: "Professional Plan",
-    participantCount: 100,
+    _id: "plan-pro",
+    title: "PRO",
+    tagline: "For property professionals ready to streamline operations",
+    pricePerUnit: "per unit / month",
+    unitRange: "1,000 - 15,000 Units",
+    minimumText: "$ 2,000 monthly min. | 1,000 - door minimum",
+    targetAudience: "Best for owners and portfolio leaders who want complete visibility and accountability.",
+    footerTagline: "Track Every Project . Verify Every Outcome",
+    ctaText: "Go Pro",
+    isPopular: true,
+    badgeText: "MOST POPULAR",
+    participantCount: 15000,
     benefits: [
-      "Up to 100 Property Units",
-      "Priority Maintenance Dispatch",
-      "Vendor Batch Payouts & Escrow",
-      "24/7 Dedicated Support Hotline",
-      "Advanced Revenue & Expense Ledgers",
-      "Custom Property Manager Branding",
+      "All Prime features, plus",
+      "Renovation & Turnover Project Workspace",
+      "Multi-Vendor Bidding & Comparison",
+      "Milestone-Based Project Approvals",
+      "Change -Order Review & Approvals",
+      "Property Work Order & Invoice Reporting",
+      "Vendor Performance & Compliance Tracking",
+      "Priority Access to ProjexPro Vetted Marketplace",
+      "White-Glove Portfolio Setup & Priority Support",
     ],
     planPrices: [
-      { type: "month", price: 499, priceId: "p_pro_mo" },
-      { type: "year", price: 4990, priceId: "p_pro_yr" },
+      { type: "month", price: 2.0, priceId: "p_pro_mo" },
+      { type: "year", price: 20.0, priceId: "p_pro_yr" },
     ],
     createdAt: "2026-01-10T00:00:00Z",
   },
   {
-    _id: "plan-3",
-    title: "Enterprise Plan",
-    participantCount: 500,
+    _id: "plan-enterprise",
+    title: "ENTERPRISE",
+    tagline: "For enterprise portfolio leaders needing custom scale & SLA support",
+    pricePerUnit: "per unit / month",
+    unitRange: "15,000+ Units",
+    minimumText: "Custom monthly min. | Enterprise SLA",
+    targetAudience: "Best for large institutional portfolio leaders requiring dedicated infrastructure & API access.",
+    footerTagline: "Empower Scale . Enterprise Security",
+    ctaText: "Contact Enterprise",
+    participantCount: 50000,
     benefits: [
-      "Unlimited Property Units",
+      "All Pro features, plus",
+      "Unlimited Property Units & Sub-Portfolios",
       "Instant Emergency Job Matching",
-      "API Integration & Webhooks",
-      "Dedicated Account Manager",
-      "Multi-Portfolio Analytics & Reports",
+      "API Integration & Custom Webhooks",
+      "Dedicated Account Manager (24/7)",
       "Custom SLA Guarantee (99.9%)",
+      "White-Label Portal & Multi-Vendor Escrow",
     ],
     planPrices: [
-      { type: "month", price: 999, priceId: "p_ent_mo" },
-      { type: "year", price: 9990, priceId: "p_ent_yr" },
+      { type: "month", price: 3.5, priceId: "p_ent_mo" },
+      { type: "year", price: 35.0, priceId: "p_ent_yr" },
     ],
     createdAt: "2026-01-05T00:00:00Z",
   },
@@ -96,9 +124,9 @@ const initialSubscribers: SubscriberAccount[] = [
     id: "SUB-801",
     partnerName: "Apex Property Group LLC",
     email: "billing@apexproperty.com",
-    planTitle: "Enterprise Plan",
+    planTitle: "ENTERPRISE Plan",
     cycle: "Yearly",
-    mrr: 999,
+    mrr: 3500,
     startDate: "Jan 12, 2026",
     renewalDate: "Jan 12, 2027",
     status: "Active Subscriptions",
@@ -108,9 +136,9 @@ const initialSubscribers: SubscriberAccount[] = [
     id: "SUB-802",
     partnerName: "Beacon Hill Management",
     email: "finance@beaconhill.com",
-    planTitle: "Professional Plan",
+    planTitle: "PRO Plan",
     cycle: "Monthly",
-    mrr: 499,
+    mrr: 2000,
     startDate: "Feb 01, 2026",
     renewalDate: "Mar 01, 2026",
     status: "Active Subscriptions",
@@ -120,9 +148,9 @@ const initialSubscribers: SubscriberAccount[] = [
     id: "SUB-803",
     partnerName: "Crestview Realty Partners",
     email: "admin@crestviewrealty.com",
-    planTitle: "Starter Plan",
+    planTitle: "PRIME Plan",
     cycle: "Monthly",
-    mrr: 199,
+    mrr: 500,
     startDate: "Feb 05, 2026",
     renewalDate: "Mar 05, 2026",
     status: "Trial Periods",
@@ -132,9 +160,9 @@ const initialSubscribers: SubscriberAccount[] = [
     id: "SUB-804",
     partnerName: "Oakridge Residential",
     email: "payments@oakridgeres.com",
-    planTitle: "Professional Plan",
+    planTitle: "PRO Plan",
     cycle: "Monthly",
-    mrr: 499,
+    mrr: 2000,
     startDate: "Dec 15, 2025",
     renewalDate: "Feb 15, 2026",
     status: "Cancelled Plans",
@@ -144,9 +172,9 @@ const initialSubscribers: SubscriberAccount[] = [
     id: "SUB-805",
     partnerName: "Summit Housing Solutions",
     email: "contact@summithousing.com",
-    planTitle: "Enterprise Plan",
+    planTitle: "ENTERPRISE Plan",
     cycle: "Monthly",
-    mrr: 999,
+    mrr: 3500,
     startDate: "Jan 20, 2026",
     renewalDate: "Feb 20, 2026",
     status: "Active Subscriptions",
@@ -173,7 +201,14 @@ export default function SubscriptionPage() {
   const handleAddPlan = (newPackage: PackageBody) => {
     const newPlan: Plan = {
       _id: `plan-${Date.now()}`,
-      title: `${newPackage.title.toUpperCase()} Plan`,
+      title: `${newPackage.title.toUpperCase()}`,
+      tagline: newPackage.tagline,
+      pricePerUnit: newPackage.pricePerUnit || "per unit / month",
+      unitRange: newPackage.unitRange || "Custom Units",
+      minimumText: newPackage.minimumText || "Custom Minimum",
+      targetAudience: newPackage.targetAudience || "Custom tier for property management",
+      footerTagline: newPackage.footerTagline || "Track Every Project . Verify Every Outcome",
+      ctaText: `Select ${newPackage.title.toUpperCase()}`,
       participantCount: newPackage.participantCount,
       benefits: newPackage.benefits,
       planPrices:
@@ -247,17 +282,17 @@ export default function SubscriptionPage() {
       {/* 1. Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-5">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-              Subscription Management
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+              The One Platform You Need Today, To Drive Growth For Tomorrow.
             </h1>
-            <span className="px-3 py-1 rounded-full bg-purple-100 text-[#8E25E3] font-bold text-xs flex items-center gap-1">
+            <span className="px-3 py-1 rounded-full bg-purple-100 text-[#8E25E3] font-semibold text-xs flex items-center gap-1 shrink-0">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>SaaS Revenue</span>
+              <span>SaaS Tiers</span>
             </span>
           </div>
-          <p className="text-sm text-gray-500 font-normal mt-1">
-            Configure membership tiers, manage recurring subscriber plans, and track monthly recurring revenue (MRR).
+          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
+            Built to adapt. Engineered to scale.
           </p>
         </div>
 
@@ -265,7 +300,7 @@ export default function SubscriptionPage() {
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-3 bg-[#8E25E3] hover:bg-[#781dc6] text-white font-semibold text-xs rounded-lg shadow-xs cursor-pointer transition-colors flex items-center gap-2"
+            className="px-4 py-3 bg-[#8E25E3] hover:bg-[#781dc6] text-white font-semibold text-xs rounded-lg shadow-xs cursor-pointer transition-colors flex items-center gap-2 whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Plan</span>

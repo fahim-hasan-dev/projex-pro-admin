@@ -8,7 +8,6 @@ import PendingProperty from "./PendingProperty";
 
 
 export default function Overview(): React.ReactElement {
-
   return (
     <div className="space-y-6">
       <div>
@@ -22,6 +21,7 @@ export default function Overview(): React.ReactElement {
         <p className="text-sm text-gray-500 font-medium mt-1">
           Your Central hub for open requests, pending approvals, and project updates.
         </p>
+        
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <RevenueChart />

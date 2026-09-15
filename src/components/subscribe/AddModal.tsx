@@ -29,7 +29,7 @@ interface AddModalProps {
 }
 
 const initialForm = {
-  title: 'basic' as PackageBody['title'],
+  title: 'prime' as PackageBody['title'],
   type: 'month' as PackageBody['type'],
   planType: 'paid' as PackageBody['planType'],
   price: '',
@@ -149,9 +149,9 @@ export default function AddModal({ isOpen, onClose, onAdd, isLoading = false }: 
                 <SelectValue placeholder="Select Plan Title" />
               </SelectTrigger>
               <SelectContent className="bg-white rounded-lg border border-gray-200 shadow-lg z-[60]">
-                <SelectItem value="free">Free</SelectItem>
-                <SelectItem value="basic">Basic</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
+                <SelectItem value="prime">Prime</SelectItem>
+                <SelectItem value="pro">Pro (ProjexPro)</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
               </SelectContent>
             </Select>
           </div>
