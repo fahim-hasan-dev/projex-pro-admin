@@ -6,7 +6,6 @@ import ServicesChart from "./ServicesChart";
 import RecentContractor from "./RecentContractor";
 import PendingProperty from "./PendingProperty";
 
-
 export default function Overview(): React.ReactElement {
   return (
     <div className="space-y-6">

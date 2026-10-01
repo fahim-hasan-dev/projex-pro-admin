@@ -1,11 +1,12 @@
 "use client";
 
 import Image from 'next/image';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useResetPasswordMutation } from '../../features/auth/authApi';
 
 function ProjexProLogo() {
   return (
@@ -23,13 +24,17 @@ function ProjexProLogo() {
 }
 
 export default function ResetPasswordForm() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token') || '';
+
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string; token?: string }>({});
 
   const router = useRouter();
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
 
   const validatePassword = (password: string): string => {
     if (!password) {
@@ -41,9 +46,13 @@ export default function ResetPasswordForm() {
     return '';
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    const newErrors: { newPassword?: string; confirmPassword?: string } = {};
+    const newErrors: { newPassword?: string; confirmPassword?: string; token?: string } = {};
+
+    if (!token) {
+      newErrors.token = 'Reset token is missing or invalid. Please request a new OTP.';
+    }
 
     const passwordError = validatePassword(newPassword);
     if (passwordError) {
@@ -58,22 +67,41 @@ export default function ResetPasswordForm() {
 
     setErrors(newErrors);
 
-    if (!newErrors.newPassword && !newErrors.confirmPassword) {
-      toast.success('Password updated successfully!');
-      router.push('/auth/login');
+    if (newErrors.newPassword || newErrors.confirmPassword || newErrors.token) {
+      if (newErrors.token) {
+        toast.error(newErrors.token);
+      }
+      return;
+    }
+
+    try {
+      const res = await resetPassword({
+        token,
+        newPassword,
+        confirmPassword,
+      }).unwrap();
+
+      if (res?.success || res?.statusCode === 200) {
+        toast.success(res?.message || 'Password reset successfully, please login now.');
+        router.push('/auth/login');
+      } else {
+        toast.error(res?.message || 'Password reset failed.');
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      const error = err as { data?: { message?: string }; message?: string };
+      const errorMessage = error?.data?.message || error?.message || 'Failed to reset password. Please try again.';
+      toast.error(errorMessage);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#F8F9FA]">
-      {/* Left Section - Form */}
-      <div className="w-full lg:w-[50%] xl:w-[50%] flex flex-col justify-between p-6 sm:p-12 lg:p-16 xl:p-20 min-h-screen">
-        {/* Logo */}
+    <div className="min-h-screen lg:h-screen w-full flex flex-col lg:flex-row bg-[#EBEBEB] overflow-x-hidden lg:overflow-hidden">
+      <div className="w-full lg:w-[50%] xl:w-[50%] flex flex-col justify-between p-6 sm:p-12 lg:p-16 xl:p-20 min-h-screen lg:h-screen overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="pt-2 sm:pt-0 max-w-lg w-full mx-auto">
           <ProjexProLogo />
         </div>
 
-        {/* Form Container */}
         <div className="max-w-lg w-full mx-auto my-auto py-2">
           <h1 className="text-2xl sm:text-3xl lg:text-[30px] font-bold text-gray-900 tracking-tight leading-snug">
             Create New Password
@@ -83,10 +111,15 @@ export default function ResetPasswordForm() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Enter New Password */}
+            {errors.token && (
+              <p className="text-xs text-red-500 font-semibold p-3 bg-red-50 rounded-lg border border-red-200">
+                {errors.token}
+              </p>
+            )}
+
             <div>
               <label htmlFor="newPassword" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Enter New Password
+                Enter New Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -114,10 +147,9 @@ export default function ResetPasswordForm() {
               )}
             </div>
 
-            {/* Confirm Your New Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Confirm Your New Password
+                Confirm Your New Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -145,15 +177,15 @@ export default function ResetPasswordForm() {
               )}
             </div>
 
-            {/* Update Password Button */}
             <button
               type="submit"
-              className="w-full mt-4 bg-[#6B1294] hover:bg-[#580e7d] text-white font-semibold py-3.5 px-4 rounded-lg shadow-sm transition-all duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              disabled={isLoading}
+              className="w-full mt-4 bg-[#6B1294] hover:bg-[#580e7d] text-white font-semibold py-3.5 px-4 rounded-lg shadow-sm transition-all duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
             >
-              Update Password
+              {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
+              <span>{isLoading ? 'Updating Password...' : 'Update Password'}</span>
             </button>
 
-            {/* Return to Login Link */}
             <div className="text-center mt-6 pt-2">
               <Link
                 href="/auth/login"
@@ -165,12 +197,10 @@ export default function ResetPasswordForm() {
           </form>
         </div>
 
-        {/* Bottom Spacer */}
         <div className="hidden lg:block"></div>
       </div>
 
-      {/* Right Section - Hero Image */}
-      <div className="hidden lg:flex lg:w-[50%] xl:w-[50%] relative flex-col justify-start p-12 lg:p-16 xl:p-20 overflow-hidden bg-gray-900">
+      <div className="hidden lg:flex lg:w-[50%] xl:w-[50%] sticky top-0 h-screen flex-shrink-0 relative flex-col justify-start p-12 lg:p-16 xl:p-20 overflow-hidden bg-gray-900">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-700 scale-105"
           style={{ backgroundImage: `url('/images/house_hero_3.png')` }}

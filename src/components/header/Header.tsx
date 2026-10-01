@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { removeToken } from "../../utils/storage";
 
+const AUTH_COOKIE_NAME = "cat-admin-token";
+
 export default function Header() {
   const userName = "Alex Morgan";
   const userInitials = "AM";
@@ -53,7 +55,8 @@ export default function Header() {
 
   const handleConfirmLogout = () => {
     removeToken();
-    document.cookie = "cat-admin-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = `${AUTH_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+    document.cookie = `cat-admin-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
     toast.success("Logged out successfully");
     setShowLogoutConfirmModal(false);
     router.push("/auth/login");

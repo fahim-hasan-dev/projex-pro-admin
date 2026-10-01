@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "react-hot-toast";
-import ProtectedRoute from '../components/ProtectedRoute';
-import ClientLayout from './ClientLayout';
+import ClientLayout from "./ClientLayout";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,14 +35,9 @@ export default function RootLayout({
         <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable}   antialiased h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}
       >
-        <ProtectedRoute>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
-          <Toaster />
-        </ProtectedRoute>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

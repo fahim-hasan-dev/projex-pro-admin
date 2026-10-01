@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   Building2,
+  ChartBarStacked,
   ClipboardCheck,
   CreditCard,
   HardHat,
@@ -59,6 +60,7 @@ const sidebars: SidebarItem[] = [
   { name: "Provider Management", path: "/provider", icon: HardHat },
   { name: "Request & Orders", path: "/request", icon: Wrench },
   { name: "Invoices & Payments", path: "/invoices", icon: CreditCard },
+  { name: "Category", path: "/category", icon: ChartBarStacked },
   { name: "Subscription", path: "/subscription", icon: Sparkles },
   { name: "Settings", path: "/settings", icon: Settings },
 ];

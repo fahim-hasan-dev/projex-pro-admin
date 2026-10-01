@@ -1,7 +1,7 @@
 export type PriorityLevel = "Critical" | "High" | "Medium" | "Low";
 export type JobStatus = "In Progress" | "Pending" | "Assigned" | "Completed" | "Cancelled";
 export type ServiceCategory = "Plumbing" | "Electrical" | "HVAC" | "Cleaning" | "Painting";
-export type FilterTab = "All Requests" | "Pending" | "In Progress" | "Scheduled" | "Completed" | "Cancelled";
+export type FilterTab = "All Requests" | "Pending" | "In Progress" | "Reassignment" | "Scheduled" | "Completed" | "Cancelled";
 
 export type ServiceRequestItem = {
   id: string;

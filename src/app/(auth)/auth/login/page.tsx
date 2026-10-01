@@ -1,11 +1,14 @@
 "use client";
 
 import Image from 'next/image';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, FormEvent, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
+import { useLoginMutation } from '../../../../features/auth/authApi';
+import { setToken } from '../../../../features/auth/authSlice';
 
 interface LoginErrors {
   email: string;
@@ -38,7 +41,8 @@ export default function LoginPage() {
   });
 
   const router = useRouter();
-
+  const dispatch = useDispatch();
+  const [login, { isLoading }] = useLoginMutation();
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,30 +53,39 @@ export default function LoginPage() {
     if (e) e.preventDefault();
     const newErrors: LoginErrors = { email: '', password: '' };
 
-    if (!email) {
-      newErrors.email = 'Email address is required';
+    if (!email.trim()) {
+      newErrors.email = 'Business email address is required';
     } else if (!validateEmail(email)) {
       newErrors.email = 'Please enter a valid email address';
     }
 
     if (!password) {
       newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
     }
 
     setErrors(newErrors);
 
-    // If there are errors, don't submit
     if (newErrors.email || newErrors.password) {
       return;
     }
     try {
-      toast.success('Login successful!');
-      router.push('/');
-    } catch (error) {
-      console.log(error);
-      toast.error('Login failed. Please check your credentials and try again.');
+      const res = await login({ email, password }).unwrap();
+      if (res?.success || res?.statusCode === 200) {
+        const token = res?.data?.accessToken;
+        if (token) {
+          dispatch(setToken(token));
+        }
+
+        toast.success(res?.message || 'Login successful!');
+        router.push('/');
+      } else {
+        toast.error(res?.message || 'Login failed.');
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      const error = err as { data?: { message?: string }; message?: string };
+      const errorMessage = error?.data?.message || error?.message || 'Login failed. Please check your credentials and try again.';
+      toast.error(errorMessage);
     }
   };
 
@@ -91,35 +104,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#F8F9FA]">
-      {/* Left Section - Form */}
-      <div className="w-full lg:w-[50%] xl:w-[50%] flex flex-col justify-between p-6 sm:p-10 md:p-12 lg:p-14 min-h-screen">
-        {/* Logo */}
+    <div className="min-h-screen lg:h-screen w-full flex flex-col lg:flex-row bg-[#EBEBEB] overflow-x-hidden lg:overflow-hidden">
+      <div className="w-full lg:w-[50%] xl:w-[50%] flex flex-col justify-between p-6 sm:p-10 md:p-12 lg:p-14 min-h-screen lg:h-screen overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="mt-14 max-w-lg w-full mx-auto">
           <ProjexProLogo />
         </div>
 
-        {/* Form Container */}
         <div className="max-w-lg w-full mx-auto my-auto py-2">
           <h1 className="text-2xl sm:text-3xl lg:text-[30px] font-bold text-gray-900 tracking-tight leading-snug">
-            The All-in-One Property Care Provider
+            Welcome back
           </h1>
           <p className="text-sm text-gray-500 mt-2 mb-8 font-normal">
-            Sign in to access your premium property account.
+            Sign in to access your Super Admin workspace.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Email Address
+                Business Email Address <span className="text-red-500">*</span>
               </label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={handleEmailChange}
-                placeholder="Enter your email Address here..."
+                placeholder="you@company.com"
                 className={`w-full px-4 py-3.5 bg-[#E2E2E5] border ${errors.email ? 'border-red-500' : 'border-transparent'
                   } rounded-lg text-gray-900 placeholder:text-gray-400 text-sm focus:bg-white focus:border-primary focus:outline-none transition-all`}
               />
@@ -128,10 +137,9 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -139,7 +147,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={handlePasswordChange}
-                  placeholder="Enter your password here..."
+                  placeholder="Enter your password..."
                   className={`w-full px-4 py-3.5 bg-[#E2E2E5] border ${errors.password ? 'border-red-500' : 'border-transparent'
                     } rounded-lg text-gray-900 placeholder:text-gray-400 text-sm focus:bg-white focus:border-primary focus:outline-none transition-all pr-11`}
                 />
@@ -156,17 +164,15 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* Forget Password */}
             <div className="flex justify-end pt-0.5">
               <Link
                 href="/auth/forgot-password"
                 className="text-xs sm:text-sm font-medium text-[#E53935] hover:underline"
               >
-                Forget Password?
+                Forgot password?
               </Link>
             </div>
 
-            {/* Remember Me */}
             <div className="flex items-center gap-2.5 pt-1">
               <input
                 type="checkbox"
@@ -176,47 +182,37 @@ export default function LoginPage() {
                 className="w-4 h-4 rounded border-gray-400 text-primary focus:ring-primary accent-[#6B1294] cursor-pointer"
               />
               <label htmlFor="remember" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                Remember Me
+                Remember this device
               </label>
             </div>
 
-            {/* Sign In Button */}
             <button
               type="submit"
-              className="w-full mt-4 bg-[#6B1294] hover:bg-[#580e7d] text-white font-semibold py-3.5 px-4 rounded-lg shadow-sm transition-all duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              disabled={isLoading}
+              className="w-full mt-4 bg-[#6B1294] hover:bg-[#580e7d] text-white font-semibold py-3.5 px-4 rounded-lg shadow-sm transition-all duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
             >
-              Sign In
+              {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
+              <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
             </button>
-
           </form>
         </div>
 
-        {/* Bottom Spacer for Alignment */}
         <div className="hidden lg:block"></div>
       </div>
 
-      {/* Right Section - Hero Image & Heading */}
-      <div className="hidden lg:flex lg:w-[52%] xl:w-[55%] relative flex-col justify-start p-12 lg:p-16 xl:p-20 overflow-hidden bg-gray-900">
-        {/* Background Image */}
+      <div className="hidden lg:flex lg:w-[50%] xl:w-[50%] sticky top-0 h-screen flex-shrink-0 relative flex-col justify-start p-12 lg:p-16 xl:p-20 overflow-hidden bg-gray-300">
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-700 scale-105"
           style={{ backgroundImage: `url('/images/building_hero.png')` }}
         />
-        {/* Dark Gradient Overlay for Text Clarity */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
-        {/* Text Content Overlay */}
-        <div className="relative z-10 text-white max-w- pt-4">
-          <p className="text-lg xl:text-xl font-normal text-gray-100 mb-6 tracking-normal">
-            Enter your credentials to continue using ProjexPro
-          </p>
-          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-semibold leading-[1.30] tracking-tight drop-shadow-md">
-            Streamlines for Managers.
-            <br />
-            Smart for Techs.
-            <br />
-            Perfect for Residents
+        <div className="relative z-10 text-white pt-4 max-w-xl">
+          <h2 className="text-3xl lg:text-4xl xl:text-[42px] font-medium leading-[1.2] tracking-tight drop-shadow-md mb-6 uppercase">
+            THE SMARTER WAY TO MANAGE PROPERTY OPERATIONS.
           </h2>
+          <p className="text-base xl:text-lg font-normal text-gray-200 leading-relaxed tracking-normal">
+            Coordinate work orders, vendors, documentation, real-time project tracking, and portfolio activity from one connected platform.
+          </p>
         </div>
       </div>
     </div>

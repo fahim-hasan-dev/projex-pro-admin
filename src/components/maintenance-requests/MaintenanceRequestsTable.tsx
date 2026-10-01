@@ -34,7 +34,7 @@ export default function MaintenanceRequestsTable({
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const getPriorityBadgeStyle = (priority: PriorityLevel) => {
+  const getPriorityBadgeStyle = (priority: string) => {
     switch (priority) {
       case "Critical":
         return "bg-[#FEE2E2] text-[#DC2626] border border-[#FCA5A5]";
@@ -44,10 +44,12 @@ export default function MaintenanceRequestsTable({
         return "bg-[#DBEAFE] text-[#2563EB] border border-[#BFDBFE]";
       case "Low":
         return "bg-[#DCFCE7] text-[#16A34A] border border-[#BBF7D0]";
+      default:
+        return "bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]";
     }
   };
 
-  const getTypeStyle = (type: ServiceCategory) => {
+  const getTypeStyle = (type: string) => {
     switch (type) {
       case "Plumbing":
         return { dot: "bg-[#2563EB]", text: "text-[#2563EB]" };
@@ -59,6 +61,12 @@ export default function MaintenanceRequestsTable({
         return { dot: "bg-[#8E25E3]", text: "text-[#8E25E3]" };
       case "Painting":
         return { dot: "bg-[#E53935]", text: "text-[#E53935]" };
+      case "Commercial":
+        return { dot: "bg-[#8E25E3]", text: "text-[#8E25E3]" };
+      case "Residential":
+        return { dot: "bg-[#2563EB]", text: "text-[#2563EB]" };
+      default:
+        return { dot: "bg-[#8E25E3]", text: "text-[#8E25E3]" };
     }
   };
 

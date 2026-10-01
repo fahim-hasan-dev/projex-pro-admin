@@ -2,7 +2,9 @@
 
 import type { ReactNode } from 'react';
 import { Provider } from "react-redux";
-import { store } from '../utils/store';
+import { Toaster } from "react-hot-toast";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { store } from "@/utils/store";
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -11,7 +13,10 @@ interface ClientLayoutProps {
 export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <Provider store={store}>
-      {children}
+      <ProtectedRoute>
+        {children}
+      </ProtectedRoute>
+      <Toaster />
     </Provider>
   );
 }
