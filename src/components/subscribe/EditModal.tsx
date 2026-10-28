@@ -1,57 +1,93 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Plus, X } from 'lucide-react';
-import { Plan, PlanPrice } from './types';
+import { Plus, X, Loader2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Plan } from './types';
 
 interface EditModalProps {
   isOpen: boolean;
   onClose: () => void;
   plan: Plan | null;
-  onSave: (plan: Plan) => void;
+  onSave: (updatedData: any) => void;
   isLoading?: boolean;
 }
 
 export default function EditModal({ isOpen, onClose, plan, onSave, isLoading = false }: EditModalProps) {
   const [formData, setFormData] = useState({
     title: '',
-    tagline: '',
-    unitRange: '',
-    minimumText: '',
-    targetAudience: '',
-    footerTagline: '',
-    participantCount: '',
-    benefits: [] as string[],
-    currentBenefit: '',
-    planPrices: [] as PlanPrice[],
-    currentPriceType: 'month' as 'free' | 'month' | 'year',
-    currentPrice: '',
+    description: '',
+    planType: 'prime' as 'prime' | 'pro' | 'enterprise',
+    unitPrice: '',
+    minimumPrice: '',
+    maxUnits: '',
+    duration: '1 month' as '1 month' | '3 months' | '6 months' | '1 year',
+    paymentType: 'Monthly' as 'Monthly' | 'Yearly',
+    features: [] as string[],
+    currentFeature: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (plan) {
-      const monthPriceObj = plan.planPrices.find(p => p.type === 'month') || plan.planPrices[0];
+      const uPrice =
+        plan.unitPrice !== undefined && plan.unitPrice !== null
+          ? plan.unitPrice.toString()
+          : plan.price !== undefined
+          ? plan.price.toString()
+          : '';
+
+      const minPrice =
+        plan.minimumPrice !== undefined && plan.minimumPrice !== null
+          ? plan.minimumPrice.toString()
+          : '';
+
+      const mUnits = plan.maxUnits !== undefined && plan.maxUnits !== null ? plan.maxUnits.toString() : '';
+
+      const feats = plan.features || plan.benefits || [];
+
       setFormData({
         title: plan.title || '',
-        tagline: plan.tagline || '',
-        unitRange: plan.unitRange || '',
-        minimumText: plan.minimumText || '',
-        targetAudience: plan.targetAudience || '',
-        footerTagline: plan.footerTagline || '',
-        participantCount: (plan.participantCount || 1000).toString(),
-        benefits: plan.benefits || [],
-        currentBenefit: '',
-        planPrices: plan.planPrices || [],
-        currentPriceType: 'month',
-        currentPrice: monthPriceObj ? monthPriceObj.price.toString() : '',
+        description: plan.description || plan.tagline || '',
+        planType: (plan.planType as any) || (plan.title.toLowerCase().includes('pro') ? 'pro' : plan.title.toLowerCase().includes('enterprise') ? 'enterprise' : 'prime'),
+        unitPrice: uPrice,
+        minimumPrice: minPrice,
+        maxUnits: mUnits,
+        duration: (plan.duration as any) || '1 month',
+        paymentType: (plan.paymentType as any) || 'Monthly',
+        features: Array.isArray(feats) ? [...feats] : [],
+        currentFeature: '',
       });
       setErrors({});
     }
   }, [plan]);
 
   if (!isOpen || !plan) return null;
+
+  const addFeature = () => {
+    if (formData.currentFeature.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        features: [...prev.features, prev.currentFeature.trim()],
+        currentFeature: '',
+      }));
+      setErrors((prev) => ({ ...prev, features: '' }));
+    }
+  };
+
+  const removeFeature = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      features: prev.features.filter((_, i) => i !== index),
+    }));
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,69 +96,50 @@ export default function EditModal({ isOpen, onClose, plan, onSave, isLoading = f
     if (!formData.title.trim()) {
       newErrors.title = 'Plan title is required';
     }
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+    }
+    const numUnitPrice = parseFloat(formData.unitPrice);
+    if (isNaN(numUnitPrice) || numUnitPrice < 0) {
+      newErrors.unitPrice = 'Valid unit price is required';
+    }
+    const numMinPrice = parseFloat(formData.minimumPrice);
+    if (isNaN(numMinPrice) || numMinPrice < 0) {
+      newErrors.minimumPrice = 'Valid minimum price is required';
+    }
+    if (formData.features.length === 0) {
+      newErrors.features = 'Please add at least one feature';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // Update monthly price if set in inputs
-    const updatedPrices = [...formData.planPrices];
-    if (formData.currentPrice && parseFloat(formData.currentPrice) >= 0) {
-      const monthIndex = updatedPrices.findIndex(p => p.type === 'month');
-      if (monthIndex >= 0) {
-        updatedPrices[monthIndex] = {
-          ...updatedPrices[monthIndex],
-          price: parseFloat(formData.currentPrice),
-        };
-      } else {
-        updatedPrices.push({
-          type: 'month',
-          price: parseFloat(formData.currentPrice),
-        });
-      }
-    }
-
     onSave({
-      ...plan,
+      _id: plan._id,
       title: formData.title.trim(),
-      tagline: formData.tagline.trim(),
-      unitRange: formData.unitRange.trim(),
-      minimumText: formData.minimumText.trim(),
-      targetAudience: formData.targetAudience.trim(),
-      footerTagline: formData.footerTagline.trim(),
-      participantCount: parseInt(formData.participantCount) || 1000,
-      benefits: formData.benefits,
-      planPrices: updatedPrices,
+      description: formData.description.trim(),
+      planType: formData.planType,
+      unitPrice: numUnitPrice,
+      minimumPrice: numMinPrice,
+      price: numMinPrice,
+      duration: formData.duration,
+      paymentType: formData.paymentType,
+      maxUnits: formData.maxUnits ? parseInt(formData.maxUnits) : null,
+      features: formData.features,
     });
-  };
-
-  const addBenefit = () => {
-    if (formData.currentBenefit.trim()) {
-      setFormData((prev) => ({
-        ...prev,
-        benefits: [...prev.benefits, prev.currentBenefit.trim()],
-        currentBenefit: '',
-      }));
-    }
-  };
-
-  const removeBenefit = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      benefits: prev.benefits.filter((_, i) => i !== index),
-    }));
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-white rounded-2xl p-6 sm:p-7 max-w-lg w-full shadow-xl border border-gray-200 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 ease-out">
+      <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-gray-200 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 ease-out custom-scrollbar">
         {/* Modal Header */}
-        <div className="flex items-center justify-between mb-5 border-b border-gray-200 pb-3.5">
+        <div className="flex items-center justify-between mb-6 border-b border-gray-200 pb-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Edit Plan Tier</h2>
+            <h2 className="text-xl font-bold text-gray-900">Edit Subscription Plan</h2>
             <p className="text-xs text-gray-500 font-normal mt-0.5">
-              Update details, pricing, and features for {plan.title}
+              Update pricing parameters and features for &quot;{plan.title}&quot;
             </p>
           </div>
           <button
@@ -130,153 +147,234 @@ export default function EditModal({ isOpen, onClose, plan, onSave, isLoading = f
             onClick={onClose}
             className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer p-1.5 rounded-full transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="space-y-4 text-left">
+        <form onSubmit={handleSave} className="space-y-4">
+          {/* Plan Type Selector */}
+          <div>
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5">
+              Plan Type
+            </label>
+            <Select
+              value={formData.planType}
+              onValueChange={(val) =>
+                setFormData((p) => ({ ...p, planType: val as 'prime' | 'pro' | 'enterprise' }))
+              }
+            >
+              <SelectTrigger className="w-full h-[44px] px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-900 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] transition-all cursor-pointer">
+                <SelectValue placeholder="Select Plan Type" />
+              </SelectTrigger>
+              <SelectContent className="bg-white rounded-lg border border-gray-200 shadow-lg z-[60]">
+                <SelectItem value="prime">Prime</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Title */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5">
               Plan Title *
             </label>
             <input
               type="text"
               value={formData.title}
-              onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
-              placeholder="e.g. PRIME, PRO, ENTERPRISE"
-              className="w-full px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-900 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] outline-none transition-all"
+              onChange={(e) => {
+                setFormData((p) => ({ ...p, title: e.target.value }));
+                if (e.target.value.trim()) setErrors((prev) => ({ ...prev, title: '' }));
+              }}
+              className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] focus:outline-none transition-all ${
+                errors.title ? 'border-red-500 bg-red-50/20' : 'border-gray-300'
+              }`}
             />
-            {errors.title && <p className="text-red-500 text-[11px] mt-1 font-semibold">{errors.title}</p>}
+            {errors.title && (
+              <p className="text-red-500 text-xs mt-1 font-semibold">{errors.title}</p>
+            )}
           </div>
 
-          {/* Subtitle / Tagline */}
+          {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Tagline / Subtitle
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5">
+              Description *
             </label>
-            <input
-              type="text"
-              value={formData.tagline}
-              onChange={(e) => setFormData((p) => ({ ...p, tagline: e.target.value }))}
-              placeholder="e.g. For property professionals ready to streamline operations"
-              className="w-full px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-900 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] outline-none transition-all"
+            <textarea
+              rows={2}
+              value={formData.description}
+              onChange={(e) => {
+                setFormData((p) => ({ ...p, description: e.target.value }));
+                if (e.target.value.trim()) setErrors((prev) => ({ ...prev, description: '' }));
+              }}
+              className={`w-full px-4 py-2 bg-white border rounded-lg text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] focus:outline-none transition-all ${
+                errors.description ? 'border-red-500 bg-red-50/20' : 'border-gray-300'
+              }`}
             />
+            {errors.description && (
+              <p className="text-red-500 text-xs mt-1 font-semibold">{errors.description}</p>
+            )}
           </div>
 
-          {/* Price per unit & Unit range */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Pricing Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Price per unit ($/mo)
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5">
+                Unit Price ($/unit) *
               </label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.currentPrice}
-                onChange={(e) => setFormData((p) => ({ ...p, currentPrice: e.target.value }))}
-                placeholder="2.00"
-                className="w-full px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-900 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] outline-none transition-all"
+                value={formData.unitPrice}
+                onChange={(e) => {
+                  setFormData((p) => ({ ...p, unitPrice: e.target.value }));
+                  if (e.target.value) setErrors((prev) => ({ ...prev, unitPrice: '' }));
+                }}
+                className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] focus:outline-none transition-all ${
+                  errors.unitPrice ? 'border-red-500 bg-red-50/20' : 'border-gray-300'
+                }`}
+              />
+              {errors.unitPrice && (
+                <p className="text-red-500 text-xs mt-1 font-semibold">{errors.unitPrice}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5">
+                Minimum Monthly Charge ($) *
+              </label>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                value={formData.minimumPrice}
+                onChange={(e) => {
+                  setFormData((p) => ({ ...p, minimumPrice: e.target.value }));
+                  if (e.target.value) setErrors((prev) => ({ ...prev, minimumPrice: '' }));
+                }}
+                className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] focus:outline-none transition-all ${
+                  errors.minimumPrice ? 'border-red-500 bg-red-50/20' : 'border-gray-300'
+                }`}
+              />
+              {errors.minimumPrice && (
+                <p className="text-red-500 text-xs mt-1 font-semibold">{errors.minimumPrice}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Unit Limit & Duration */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5">
+                Maximum Unit Threshold
+              </label>
+              <input
+                type="number"
+                placeholder="e.g. 1000 (blank for unlimited)"
+                value={formData.maxUnits}
+                onChange={(e) => setFormData((p) => ({ ...p, maxUnits: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] focus:outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Unit Bounds / Range
+              <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5">
+                Billing Cycle *
               </label>
-              <input
-                type="text"
-                value={formData.unitRange}
-                onChange={(e) => setFormData((p) => ({ ...p, unitRange: e.target.value }))}
-                placeholder="1,000 - 15,000 Units"
-                className="w-full px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-900 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] outline-none transition-all"
-              />
+              <Select
+                value={formData.duration}
+                onValueChange={(val) =>
+                  setFormData((p) => ({
+                    ...p,
+                    duration: val as any,
+                    paymentType: val === '1 year' ? 'Yearly' : 'Monthly',
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full h-[44px] px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-900 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] transition-all cursor-pointer">
+                  <SelectValue placeholder="Select Duration" />
+                </SelectTrigger>
+                <SelectContent className="bg-white rounded-lg border border-gray-200 shadow-lg z-[60]">
+                  <SelectItem value="1 month">1 Month (Monthly)</SelectItem>
+                  <SelectItem value="3 months">3 Months</SelectItem>
+                  <SelectItem value="6 months">6 Months</SelectItem>
+                  <SelectItem value="1 year">1 Year (Yearly)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Minimums Text */}
+          {/* Features */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Minimum Requirement Text
-            </label>
-            <input
-              type="text"
-              value={formData.minimumText}
-              onChange={(e) => setFormData((p) => ({ ...p, minimumText: e.target.value }))}
-              placeholder="$ 2,000 monthly min. | 1,000 - door minimum"
-              className="w-full px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-900 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] outline-none transition-all"
-            />
-          </div>
-
-          {/* Target Audience */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Target Audience Description
-            </label>
-            <textarea
-              rows={2}
-              value={formData.targetAudience}
-              onChange={(e) => setFormData((p) => ({ ...p, targetAudience: e.target.value }))}
-              placeholder="Best for owners and portfolio leaders who want complete visibility..."
-              className="w-full px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-900 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] outline-none transition-all resize-none"
-            />
-          </div>
-
-          {/* Benefits */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Checklist Features & Benefits
+            <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5">
+              Plan Features *
             </label>
             <div className="flex gap-2 mb-2">
               <input
                 type="text"
-                placeholder="Add a plan benefit..."
-                value={formData.currentBenefit}
-                onChange={(e) => setFormData((p) => ({ ...p, currentBenefit: e.target.value }))}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addBenefit())}
-                className="flex-1 px-3.5 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-900 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] outline-none transition-all"
+                placeholder="Add a feature..."
+                value={formData.currentFeature}
+                onChange={(e) => setFormData((p) => ({ ...p, currentFeature: e.target.value }))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addFeature();
+                  }
+                }}
+                className="flex-1 px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#8E25E3]/30 focus:border-[#8E25E3] focus:outline-none transition-all"
               />
               <button
                 type="button"
-                onClick={addBenefit}
-                className="px-3 py-2 bg-[#8E25E3] hover:bg-[#781dc6] text-white font-semibold rounded-lg transition-colors flex items-center justify-center cursor-pointer text-xs"
+                onClick={addFeature}
+                className="px-4 py-2.5 bg-[#8E25E3] hover:bg-[#781dc6] text-white rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <Plus className="w-4 h-4" />
+                <span>Add</span>
               </button>
             </div>
+            {errors.features && (
+              <p className="text-red-500 text-xs mb-2 font-semibold">{errors.features}</p>
+            )}
 
-            <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
-              {formData.benefits.map((benefit, index) => (
-                <div key={index} className="flex items-center justify-between px-3 py-1.5 bg-purple-50/70 border border-purple-100 rounded-lg">
-                  <span className="text-xs font-medium text-gray-800">{benefit}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeBenefit(index)}
-                    className="p-1 text-red-500 hover:text-red-700 rounded-md cursor-pointer transition-colors"
+            {formData.features.length > 0 && (
+              <div className="space-y-1.5 max-h-36 overflow-y-auto p-2 bg-gray-50 border border-gray-200 rounded-lg custom-scrollbar">
+                {formData.features.map((feature, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between gap-2 p-2 bg-white rounded-md border border-gray-200 text-xs font-medium text-gray-800"
                   >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
+                    <span>{feature}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeFeature(idx)}
+                      className="text-gray-400 hover:text-red-600 p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2.5 pt-3 border-t border-gray-200">
+          {/* Form Actions */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-semibold text-xs transition-colors cursor-pointer"
+              disabled={isLoading}
+              className="px-5 py-2.5 border border-gray-300 hover:bg-gray-100 text-gray-700 font-semibold text-xs rounded-xl cursor-pointer transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 py-2.5 px-4 bg-[#8E25E3] hover:bg-[#781dc6] text-white font-semibold text-xs rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+              className="px-6 py-2.5 bg-[#8E25E3] hover:bg-[#781dc6] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer transition-colors flex items-center gap-2 disabled:opacity-60"
             >
-              {isLoading ? 'Saving...' : 'Save Plan Changes'}
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>{isLoading ? 'Saving Changes...' : 'Save Changes'}</span>
             </button>
           </div>
         </form>

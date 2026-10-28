@@ -31,13 +31,13 @@ import Image from "next/image";
 
 function ProjexProLogo() {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center">
       <Image
         src="/logo/logo.png"
         alt="ProjexPro Logo"
-        width={220}
-        height={60}
-        className="h-15 w-auto object-contain"
+        width={578}
+        height={515}
+        className="h-[68px] w-auto object-contain"
         priority
       />
     </div>
@@ -60,7 +60,7 @@ const sidebars: SidebarItem[] = [
   { name: "Provider Management", path: "/provider", icon: HardHat },
   { name: "Request & Orders", path: "/request", icon: Wrench },
   { name: "Invoices & Payments", path: "/invoices", icon: CreditCard },
-  { name: "Category", path: "/category", icon: ChartBarStacked },
+  { name: "Property Type", path: "/category", icon: Building2 },
   { name: "Subscription", path: "/subscription", icon: Sparkles },
   { name: "Settings", path: "/settings", icon: Settings },
 ];

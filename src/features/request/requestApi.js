@@ -10,7 +10,9 @@ export const requestApi = baseApi.injectEndpoints({
                 if (params?.status && params?.status !== "all" && params?.status !== "All Requests") {
                     queryParams.append("status", params.status);
                 }
-                if (params?.search) queryParams.append("search", params.search);
+                if (params?.search) {
+                    queryParams.append("searchTerm", params.search);
+                }
                 const queryString = queryParams.toString();
                 return {
                     url: `/service-request${queryString ? `?${queryString}` : ""}`,
@@ -37,6 +39,22 @@ export const requestApi = baseApi.injectEndpoints({
             invalidatesTags: ["request"],
         }),
 
+        updateServiceRequestStatus: builder.mutation({
+            query: ({ data, id }) => ({
+                url: `/service-request/status/${id}`,
+                method: "PATCH",
+                body: data,
+            }),
+            invalidatesTags: ["request"],
+        }),
+
+        deleteServiceRequest: builder.mutation({
+            query: (id) => ({
+                url: `/service-request/${id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: ["request"],
+        }),
 
         allAssignServiceProvide: builder.query({
             query: () => {
@@ -47,8 +65,6 @@ export const requestApi = baseApi.injectEndpoints({
             },
             providesTags: ["request"],
         }),
-
-
     }),
 });
 
@@ -59,6 +75,8 @@ export const {
     useGetSingleServicesRequestQuery,
     useAllAssignServiceProvideQuery,
     useAssignServiceProvideByAdminMutation,
+    useUpdateServiceRequestStatusMutation,
+    useDeleteServiceRequestMutation,
 } = requestApi;
 
 

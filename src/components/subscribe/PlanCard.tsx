@@ -11,58 +11,77 @@ interface PlanCardProps {
 }
 
 export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
-  const isPro = plan.title.toLowerCase().includes('pro');
-  const isPrime = plan.title.toLowerCase().includes('prime');
+  const planType = (plan.planType || '').toLowerCase();
+  const titleLower = (plan.title || '').toLowerCase();
 
-  const priceObj = plan.planPrices.find(p => p.type === 'month') || plan.planPrices[0];
-  const formattedPrice = priceObj ? (priceObj.price === 0 ? '0.00' : priceObj.price.toFixed(2)) : '0.00';
+  const isPro = planType === 'pro' || titleLower.includes('pro');
+  const isPrime = planType === 'prime' || titleLower.includes('prime');
+  const isEnterprise = planType === 'enterprise' || titleLower.includes('enterprise');
 
+  // Price formatting
+  const unitPrice =
+    plan.unitPrice !== undefined && plan.unitPrice !== null
+      ? plan.unitPrice
+      : plan.price !== undefined && plan.price !== null
+      ? plan.price
+      : 0;
+
+  const formattedUnitPrice = unitPrice === 0 ? '0.00' : Number(unitPrice).toFixed(2);
+
+  // Defaults based on plan type if not provided
   const defaultTagline = isPro
     ? 'For property professionals ready to streamline operations'
     : isPrime
-      ? 'For property managers starting out with core operational tools'
-      : 'For enterprise portfolio leaders needing custom scale & SLA support';
+    ? 'For property managers starting out with core operational tools'
+    : 'For enterprise portfolio leaders needing custom scale & SLA support';
 
-  const defaultUnitRange = isPro
+  const defaultUnitRange = plan.maxUnits
+    ? `Up to ${plan.maxUnits.toLocaleString()} Units`
+    : isPro
     ? '1,000 - 15,000 Units'
     : isPrime
-      ? 'Up to 1,000 Units'
-      : '15,000+ Units';
+    ? 'Up to 1,000 Units'
+    : '15,000+ Units';
 
-  const defaultMinimumText = isPro
+  const defaultMinimumText = plan.minimumPrice
+    ? `$ ${plan.minimumPrice.toLocaleString()} ${plan.paymentType === 'Yearly' ? 'yearly' : 'monthly'} min.`
+    : isPro
     ? '$ 2,000 monthly min. | 1,000 - door minimum'
     : isPrime
-      ? '$ 500 monthly min. | 250 - door minimum'
-      : 'Custom monthly min. | Enterprise SLA';
+    ? '$ 500 monthly min. | 250 - door minimum'
+    : 'Custom monthly min. | Enterprise SLA';
 
   const defaultTargetAudience = isPro
     ? 'Best for owners and portfolio leaders who want complete visibility and accountability.'
     : isPrime
-      ? 'Best for independent operators needing essential tracking & work orders.'
-      : 'Best for large institutional portfolio leaders requiring dedicated infrastructure & API access.';
+    ? 'Best for independent operators needing essential tracking & work orders.'
+    : 'Best for large institutional portfolio leaders requiring dedicated infrastructure & API access.';
 
   const defaultFooterTagline = isPro
     ? 'Track Every Project . Verify Every Outcome'
     : isPrime
-      ? 'Streamline Operations . Build Efficiency'
-      : 'Empower Scale . Enterprise Security';
+    ? 'Streamline Operations . Build Efficiency'
+    : 'Empower Scale . Enterprise Security';
 
   const defaultCtaText = isPro
-    ? 'Go Pro'
+    ? 'Edit Pro Tier'
     : isPrime
-      ? 'Select Prime'
-      : 'Contact Enterprise';
+    ? 'Edit Prime Tier'
+    : isEnterprise
+    ? 'Edit Enterprise Tier'
+    : 'Edit Tier';
 
-  const tagline = plan.tagline || defaultTagline;
+  const tagline = plan.description || plan.tagline || defaultTagline;
   const unitRange = plan.unitRange || defaultUnitRange;
   const minimumText = plan.minimumText || defaultMinimumText;
   const targetAudience = plan.targetAudience || defaultTargetAudience;
   const footerTagline = plan.footerTagline || defaultFooterTagline;
   const ctaText = plan.ctaText || defaultCtaText;
-  const pricePerUnit = plan.pricePerUnit || 'per unit / month';
+  const pricePerUnit = plan.pricePerUnit || (plan.paymentType === 'Yearly' ? 'per unit / year' : 'per unit / month');
+  const featuresList = plan.features || plan.benefits || [];
 
   if (isPro) {
-    // Featured Pro Card (Established Purple Theme)
+    // Featured Pro Card (Established Purple Gradient Theme)
     return (
       <div className="bg-gradient-to-b from-[#8E25E3] via-[#7b1fa2] to-[#5b1b95] text-white rounded-2xl p-6 shadow-md flex flex-col justify-between relative border border-purple-400/40 h-full hover:shadow-lg transition-all">
         {/* Card Header & Admin Actions */}
@@ -104,7 +123,7 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
             {/* Price */}
             <div className="pt-3 pb-1">
               <span className="text-3xl sm:text-4xl font-medium text-white tracking-tight">
-                ${formattedPrice}
+                ${formattedUnitPrice}
               </span>
               <p className="text-xs text-purple-200 font-medium mt-0.5">
                 {pricePerUnit}
@@ -129,11 +148,11 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
 
           {/* Features */}
           <div className="space-y-2 my-4">
-            {plan.benefits.map((benefit, idx) => (
+            {featuresList.map((feature, idx) => (
               <div key={idx} className="flex items-start gap-2 text-left">
                 <Check className="w-3.5 h-3.5 text-white shrink-0 mt-0.5" />
                 <span className="text-xs text-white font-normal leading-snug">
-                  {benefit}
+                  {feature}
                 </span>
               </div>
             ))}
@@ -200,7 +219,7 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
           {/* Price */}
           <div className="pt-3 pb-1">
             <span className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
-              ${formattedPrice}
+              ${formattedUnitPrice}
             </span>
             <p className="text-xs text-gray-500 font-medium mt-0.5">
               {pricePerUnit}
@@ -225,11 +244,11 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
 
         {/* Features */}
         <div className="space-y-2 my-4">
-          {plan.benefits.map((benefit, idx) => (
+          {featuresList.map((feature, idx) => (
             <div key={idx} className="flex items-start gap-2 text-left">
               <Check className="w-3.5 h-3.5 text-[#8E25E3] shrink-0 mt-0.5" />
               <span className="text-xs text-gray-700 font-medium leading-snug">
-                {benefit}
+                {feature}
               </span>
             </div>
           ))}
@@ -253,4 +272,3 @@ export default function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
     </div>
   );
 }
-

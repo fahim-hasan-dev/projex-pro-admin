@@ -30,7 +30,7 @@ export default function DeleteCategoryModal({
       const res = await deleteCategory(category._id).unwrap();
 
       if (res?.success || res?.statusCode === 200) {
-        toast.success(res?.message || `${isSubcategory ? "Subcategory" : "Category"} deleted successfully!`);
+        toast.success(res?.message || "Property Sub-Type deleted successfully!");
         onClose();
       } else {
         toast.error(res?.message || "Failed to delete item");
@@ -47,7 +47,7 @@ export default function DeleteCategoryModal({
         <DialogHeader className="pb-3 border-b border-gray-100">
           <DialogTitle className="text-xl font-bold text-red-600 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-red-500" />
-            Delete {isSubcategory ? "Subcategory" : "Category"}
+            Delete Property Sub-Type
           </DialogTitle>
         </DialogHeader>
 
@@ -57,7 +57,7 @@ export default function DeleteCategoryModal({
             <span className="font-bold text-gray-900">"{category?.name}"</span>?
           </p>
           <p className="text-xs text-gray-500 bg-red-50/70 p-3 rounded-xl border border-red-100 leading-relaxed">
-            ⚠️ Warning: {isSubcategory ? "This action will permanently delete this subcategory." : "Deleting a root category may also affect its associated subcategories."}
+            ⚠️ Warning: This action will permanently remove this property sub-type.
           </p>
         </div>
 

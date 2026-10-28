@@ -59,7 +59,6 @@ export default function ProviderApplicantsList({
   return (
     <div className="space-y-4">
       {applicants.map((item) => {
-        console.log("items ", item)
         const isExpanded = expandedCardId === item.id;
         const isPending = item.status === "Pending" || item.status === "Under Review";
 
@@ -242,6 +241,15 @@ export default function ProviderApplicantsList({
                         </span>
                         <span className="text-xs font-mono font-bold text-amber-950 truncate block">
                           {item.taxId || "N/A"}
+                        </span>
+                      </div>
+
+                      <div className="bg-purple-50/80 border border-purple-200 rounded-lg p-2.5">
+                        <span className="text-[10px] font-bold text-purple-700 uppercase block mb-0.5">
+                          Provider ID
+                        </span>
+                        <span className="text-xs font-mono font-bold text-purple-950 truncate block" title={item.id}>
+                          #{item.id ? String(item.id).slice(-6).toUpperCase() : "N/A"}
                         </span>
                       </div>
                     </div>

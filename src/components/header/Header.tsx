@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, Bell, ChevronDown, LogOut, User, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useGetUnreadNotificationCountQuery } from "@/features/notification/notificationApi";
 import { removeToken } from "../../utils/storage";
 
 const AUTH_COOKIE_NAME = "cat-admin-token";
@@ -13,7 +14,11 @@ export default function Header() {
   const userName = "Alex Morgan";
   const userInitials = "AM";
   const userRole = "Super Admin";
-  const notificationCount = 2;
+
+  const { data: unreadData } = useGetUnreadNotificationCountQuery(undefined, {
+    pollingInterval: 30000,
+  });
+  const notificationCount = typeof unreadData?.data === "number" ? unreadData.data : 0;
 
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

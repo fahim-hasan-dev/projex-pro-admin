@@ -5,10 +5,13 @@ export type JobStatus =
   | "Assigned"
   | "Accepted"
   | "In Progress"
+  | "Pending Approval"
   | "Reassignment Requested"
+  | "Rejected"
   | "Declined"
   | "Completed"
-  | "Cancelled";
+  | "Cancelled"
+  | string;
 
 export type ServiceCategory =
   | "Plumbing"
@@ -61,6 +64,9 @@ export interface ServiceRequestItem {
   
   // Parent-child relationship
   extraWorkRequests: ExtraWorkRequest[];
+  _id?: string;
+  specializedRate?: any;
+  raw?: any;
 }
 
 const STORAGE_KEY = "project_pro_service_requests_v2";

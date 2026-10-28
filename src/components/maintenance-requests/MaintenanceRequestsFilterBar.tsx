@@ -21,9 +21,14 @@ export default function MaintenanceRequestsFilterBar({
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: "All Requests", label: "All Requests", count: requests.length },
     { key: "Pending", label: "Pending", count: requests.filter((r) => r.status === "Pending").length },
-    { key: "In Progress", label: "In Progress", count: requests.filter((r) => r.status === "In Progress" || r.status === "Assigned").length },
-    { key: "Scheduled", label: "Scheduled", count: requests.filter((r) => r.status === "Assigned").length },
+    { key: "Assigned", label: "Assigned", count: requests.filter((r) => r.status === "Assigned").length },
+    {
+      key: "In Progress",
+      label: "In Progress",
+      count: requests.filter((r) => r.status === "In Progress" || r.status === "Accepted" || r.status === "Pending Approval").length,
+    },
     { key: "Completed", label: "Completed", count: requests.filter((r) => r.status === "Completed").length },
+    { key: "Rejected", label: "Rejected", count: requests.filter((r) => r.status === "Rejected" || r.status === "Declined").length },
     { key: "Cancelled", label: "Cancelled", count: requests.filter((r) => r.status === "Cancelled").length },
   ];
 

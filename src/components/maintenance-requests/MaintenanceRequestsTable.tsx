@@ -80,6 +80,13 @@ export default function MaintenanceRequestsTable({
             In Progress
           </span>
         );
+      case "Pending Approval":
+        return (
+          <span className="flex items-center gap-1.5 text-[#8E25E3] font-semibold text-xs">
+            <Clock className="w-3.5 h-3.5 text-[#8E25E3]" />
+            Pending Approval
+          </span>
+        );
       case "Pending":
         return (
           <span className="flex items-center gap-1.5 text-[#D97706] font-semibold text-xs">
@@ -94,11 +101,13 @@ export default function MaintenanceRequestsTable({
             Assigned
           </span>
         );
+      case "Rejected":
+      case "Declined":
       case "Reassignment Requested":
         return (
           <span className="flex items-center gap-1.5 text-red-600 font-bold text-xs bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
             <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-            Reassign Needed
+            Rejected
           </span>
         );
       case "Completed":
@@ -149,6 +158,8 @@ export default function MaintenanceRequestsTable({
                 const typeStyle = getTypeStyle(item.type);
                 const hasExtraWorks = item.extraWorkRequests && item.extraWorkRequests.length > 0;
                 const isExpanded = !!expandedRows[item.id];
+                const canAssignItem = item.status === "Pending" || item.status === "Rejected" || item.status === "Declined";
+                const isItemRejected = item.status === "Rejected" || item.status === "Declined";
 
                 return (
                   <React.Fragment key={item.id}>
@@ -209,12 +220,19 @@ export default function MaintenanceRequestsTable({
 
                       {/* Contractor */}
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <span
-                          className={`font-semibold text-xs ${item.contractor === "Unassigned" ? "text-[#DC2626]" : "text-gray-900"
-                            }`}
-                        >
-                          {item.contractor}
-                        </span>
+                        <div>
+                          <span
+                            className={`font-semibold text-xs ${item.contractor === "Unassigned" ? "text-[#DC2626]" : "text-gray-900"
+                              }`}
+                          >
+                            {item.contractor}
+                          </span>
+                          {isItemRejected && (
+                            <span className="text-[10px] text-red-600 font-bold block">
+                              (Rejected)
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Priority */}
@@ -241,7 +259,9 @@ export default function MaintenanceRequestsTable({
                           </span>
                           {item.additionalFee ? (
                             <span className="text-[11px] text-[#8E25E3] font-semibold block">
-                              +${item.additionalFee} Custom Fee
+                              {item.specializedRate?.paymentType === "Percentage"
+                                ? `+${item.additionalFee}% Specialized`
+                                : `+$${item.additionalFee} Custom Fee`}
                             </span>
                           ) : null}
                         </div>
@@ -249,14 +269,21 @@ export default function MaintenanceRequestsTable({
 
                       {/* Actions */}
                       <td className="py-4 px-5 text-center whitespace-nowrap space-x-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenJobModal(item)}
-                          className="px-3 py-1.5 border border-[#E9D5FF] hover:border-[#8E25E3] text-[#8E25E3] bg-[#F3E8FF] hover:bg-[#E9D5FF] font-semibold text-xs rounded-lg transition-all cursor-pointer inline-flex items-center justify-center gap-1 shadow-2xs"
-                        >
-                          <Wrench className="w-3.5 h-3.5" />
-                          <span>Open Job</span>
-                        </button>
+                        {canAssignItem && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenJobModal(item)}
+                            className={`px-3 py-1.5 border font-semibold text-xs rounded-lg transition-all cursor-pointer inline-flex items-center justify-center gap-1 shadow-2xs ${
+                              isItemRejected
+                                ? "border-red-200 hover:border-red-400 text-red-700 bg-red-50 hover:bg-red-100"
+                                : "border-[#E9D5FF] hover:border-[#8E25E3] text-[#8E25E3] bg-[#F3E8FF] hover:bg-[#E9D5FF]"
+                            }`}
+                            title={isItemRejected ? "Reassign to another provider" : "Assign service provider"}
+                          >
+                            <Wrench className="w-3.5 h-3.5" />
+                            <span>{isItemRejected ? "Reassign" : "Assign Job"}</span>
+                          </button>
+                        )}
 
                         {handleOpenDetailsModal && (
                           <button
@@ -273,7 +300,7 @@ export default function MaintenanceRequestsTable({
                     </tr>
 
                     {/* REASSIGNMENT ALERT ROW IF DECLINED */}
-                    {item.declineReason && (
+                    {item.declineReason && isItemRejected && (
                       <tr className="bg-red-50/80 border-b border-red-200 text-xs">
                         <td></td>
                         <td colSpan={8} className="py-2.5 px-4 text-red-900">

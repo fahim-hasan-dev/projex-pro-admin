@@ -119,8 +119,9 @@ export default function CreateServiceRequestModal({
             <label className="block text-gray-700 font-bold mb-1">Estimated Base Pay ($)</label>
             <input
               type="number"
-              value={newBasePay}
-              onChange={(e) => setNewBasePay(Number(e.target.value))}
+              placeholder="0"
+              value={newBasePay === 0 ? "" : newBasePay}
+              onChange={(e) => setNewBasePay(e.target.value === "" ? 0 : Number(e.target.value))}
               className="w-full p-2.5 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-[#8E25E3]/40 focus:outline-none text-sm"
             />
           </div>

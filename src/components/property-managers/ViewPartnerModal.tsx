@@ -33,10 +33,12 @@ export default function ViewPartnerModal({ partner, onClose }: ViewPartnerModalP
           <p><strong>Location:</strong> {partner.location}</p>
           <p><strong>Contact Person:</strong> {partner.contactName}</p>
           <p><strong>Email:</strong> {partner.contactEmail}</p>
-          <p><strong>Managed Properties/Units:</strong> {partner.noOfUnits}</p>
+          {partner.contactPhone && <p><strong>Phone:</strong> {partner.contactPhone}</p>}
+          <p><strong>Managed Properties:</strong> {partner.noOfUnits} properties</p>
           <p><strong>Subscription Plan:</strong> {partner.plan}</p>
           <p><strong>Account Status:</strong> {partner.status}</p>
           <p><strong>Payment Type:</strong> {partner.paymentType}</p>
+          <p className="text-[10px] text-gray-400 font-mono pt-1"><strong>Database ID:</strong> {partner.rawId}</p>
         </div>
 
         <div className="pt-2 border-t border-gray-200">

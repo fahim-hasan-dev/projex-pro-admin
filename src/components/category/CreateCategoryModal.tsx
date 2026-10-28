@@ -8,15 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateCategoryMutation } from "@/features/category/categoryApi";
 import { CategoryItem } from "@/types/category";
-import { Loader2, PlusCircle, FolderTree, Tag } from "lucide-react";
+import { Loader2, PlusCircle, Home, Building2, Layers } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface CreateCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  categories: CategoryItem[];
+  categories: CategoryItem[]; // Fixed parent property types: Residential, Commercial, Mixed-use
   initialParentId?: string | null;
-  initialType?: "category" | "subcategory";
 }
 
 export default function CreateCategoryModal({
@@ -24,162 +23,132 @@ export default function CreateCategoryModal({
   onClose,
   categories,
   initialParentId = null,
-  initialType = "category",
 }: CreateCategoryModalProps) {
   const [createCategory, { isLoading }] = useCreateCategoryMutation();
 
-  const [type, setType] = useState<"category" | "subcategory">(initialType);
   const [name, setName] = useState("");
   const [selectedParentId, setSelectedParentId] = useState<string>(initialParentId || "");
 
   useEffect(() => {
     if (isOpen) {
-      setType(initialParentId ? "subcategory" : initialType);
       setSelectedParentId(initialParentId || (categories.length > 0 ? categories[0]._id : ""));
       setName("");
     }
-  }, [isOpen, initialParentId, initialType, categories]);
+  }, [isOpen, initialParentId, categories]);
+
+  const getParentIcon = (catName: string) => {
+    const lower = catName.toLowerCase();
+    if (lower.includes("commercial")) return <Building2 className="w-4 h-4 text-blue-600" />;
+    if (lower.includes("mixed")) return <Layers className="w-4 h-4 text-purple-600" />;
+    return <Home className="w-4 h-4 text-emerald-600" />;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error("Please enter a category name");
+      toast.error("Please enter a property sub-type name");
       return;
     }
 
-    if (type === "subcategory" && !selectedParentId) {
-      toast.error("Please select a parent category for the subcategory");
+    if (!selectedParentId) {
+      toast.error("Please select a parent property type");
       return;
     }
 
     const payload = {
       name: name.trim(),
-      parent: type === "subcategory" ? selectedParentId : null,
+      parent: selectedParentId,
     };
 
     try {
       const res = await createCategory(payload).unwrap();
       if (res?.success || res?.statusCode === 200 || res?.statusCode === 201) {
-        toast.success(
-          res?.message ||
-          (type === "subcategory"
-            ? "Subcategory created successfully!"
-            : "Category created successfully!")
-        );
+        toast.success(res?.message || "Property Sub-Type created successfully!");
         onClose();
         setName("");
       } else {
-        toast.error(res?.message || "Failed to create category");
+        toast.error(res?.message || "Failed to create property sub-type");
       }
     } catch (err: any) {
-      console.error("Create Category Error:", err);
-      toast.error(err?.data?.message || err?.message || "Something went wrong while creating category");
+      console.error("Create Sub-Type Error:", err);
+      toast.error(err?.data?.message || err?.message || "Something went wrong while creating property sub-type");
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[480px] bg-white rounded-xl p-6 border border-gray-100 shadow-xl">
+      <DialogContent className="sm:max-w-[480px] bg-white rounded-2xl p-6 border border-gray-100 shadow-xl">
         <DialogHeader className="pb-4 border-b border-gray-100">
           <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <PlusCircle className="w-5 h-5 text-[#8E25E3]" />
-            {type === "subcategory" ? "Add New Subcategory" : "Add New Category"}
+            Add New Property Sub-Type
           </DialogTitle>
+          <p className="text-xs text-gray-500 font-normal mt-0.5">
+            Add a new child property type under one of the 3 fixed parent categories
+          </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-[#16px] space-y-4 pt-4">
-          {/* Category Type Toggle */}
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {/* Parent Property Type Selection */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Category Type
+              Parent Property Type <span className="text-red-500">*</span>
             </Label>
-            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100/80 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setType("category")}
-                className={`py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${type === "category"
-                    ? "bg-white text-[#8E25E3] shadow-xs"
-                    : "text-gray-600 hover:text-gray-900"
-                  }`}
+            {categories.length === 0 ? (
+              <p className="text-xs text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                Loading parent property types...
+              </p>
+            ) : (
+              <Select
+                value={selectedParentId}
+                onValueChange={(val) => setSelectedParentId(val)}
               >
-                <Tag className="w-3.5 h-3.5" />
-                Root Category
-              </button>
-              <button
-                type="button"
-                onClick={() => setType("subcategory")}
-                className={`py-2 px-3 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${type === "subcategory"
-                    ? "bg-white text-[#8E25E3] shadow-xs"
-                    : "text-gray-600 hover:text-gray-900"
-                  }`}
-              >
-                <FolderTree className="w-3.5 h-3.5" />
-                Subcategory
-              </button>
-            </div>
+                <SelectTrigger className="w-full h-11 py-2.5 rounded-xl border-gray-200 text-sm font-medium focus:ring-[#8E25E3]">
+                  <SelectValue placeholder="Choose parent property type..." />
+                </SelectTrigger>
+                <SelectContent className="bg-white rounded-xl shadow-lg border border-gray-100">
+                  {categories.map((cat) => (
+                    <SelectItem key={cat._id} value={cat._id} className="cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        {getParentIcon(cat.name)}
+                        <span className="font-semibold text-gray-800">{cat.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
-          {/* If Subcategory: Select Parent Category */}
-          {type === "subcategory" && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Select Parent Category <span className="text-red-500">*</span>
-              </Label>
-              {categories.length === 0 ? (
-                <p className="text-xs text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
-                  No root categories available. Please create a parent category first.
-                </p>
-              ) : (
-                <Select
-                  value={selectedParentId}
-                  onValueChange={(val) => setSelectedParentId(val)}
-                >
-                  <SelectTrigger className="w-full h-11 py-5 rounded-lg border-gray-200 text-sm font-medium focus:ring-[#8E25E3]">
-                    <SelectValue placeholder="Choose a parent category..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white rounded-lg shadow-lg border border-gray-100">
-                    {categories.map((cat) => (
-                      <SelectItem key={cat._id} value={cat._id} className="cursor-pointer">
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          )}
-
-          {/* Name Input */}
+          {/* Sub-Type Name Input */}
           <div className="space-y-1.5">
-            <Label htmlFor="catName" className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              {type === "subcategory" ? "Subcategory Name" : "Category Name"} <span className="text-red-500">*</span>
+            <Label htmlFor="subTypeName" className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Property Sub-Type Name <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="catName"
-              placeholder={type === "subcategory" ? "e.g., Roofing Repairs" : "e.g., Residential"}
+              id="subTypeName"
+              placeholder="e.g., Townhouse, Penthouse, Retail Plaza, Studio..."
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-11 rounded-lg border-gray-200 text-sm focus:border-[#8E25E3] focus:ring-[#8E25E3]"
+              className="h-11 rounded-xl border-gray-200 text-sm focus:border-[#8E25E3] focus:ring-[#8E25E3]"
               required
             />
           </div>
-
-
 
           <DialogFooter className="pt-4 border-t border-gray-100 flex gap-2 justify-end">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="h-11 px-5 rounded-lg border-gray-200 text-gray-700 hover:bg-gray-50"
+              className="h-11 px-5 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || (type === "subcategory" && categories.length === 0)}
-              className="h-11 px-6 rounded-lg bg-[#8E25E3] hover:bg-[#7b1ed0] text-white font-semibold transition-colors"
+              disabled={isLoading || categories.length === 0}
+              className="h-11 px-6 rounded-xl bg-[#8E25E3] hover:bg-[#7b1ed0] text-white font-semibold transition-colors"
             >
               {isLoading ? (
                 <>
@@ -187,7 +156,7 @@ export default function CreateCategoryModal({
                   Creating...
                 </>
               ) : (
-                `Create ${type === "subcategory" ? "Subcategory" : "Category"}`
+                "Add Sub-Type"
               )}
             </Button>
           </DialogFooter>

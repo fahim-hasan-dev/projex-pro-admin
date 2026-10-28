@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PartnerStatus, PlanType, PropertyPartner } from "./types";
+import { PartnerStatus, PropertyPartner } from "./types";
 
 interface EditPartnerModalProps {
   partner: PropertyPartner | null;
@@ -33,7 +33,10 @@ export default function EditPartnerModal({
         className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150"
       >
         <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-          <h3 className="text-base font-bold text-gray-900">Edit Partner Account</h3>
+          <div>
+            <span className="text-[11px] font-bold text-[#8E25E3] uppercase">{partner.id}</span>
+            <h3 className="text-base font-bold text-gray-900">Update Partner Status</h3>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -43,65 +46,58 @@ export default function EditPartnerModal({
           </button>
         </div>
 
-        <div className="space-y-4 text-xs">
+        {/* Read-only info section */}
+        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200/80 space-y-2 text-xs text-gray-700">
           <div>
-            <label className="block text-gray-700 font-bold mb-1">Property Name</label>
-            <input
-              type="text"
-              value={partner.propertyName}
-              onChange={(e) => setPartner({ ...partner, propertyName: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#8E25E3]/40 focus:outline-none"
-            />
+            <span className="text-gray-500 font-medium">Partner Name:</span>
+            <p className="font-semibold text-gray-900 text-sm mt-0.5">{partner.propertyName}</p>
           </div>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div>
+              <span className="text-gray-500 font-medium">Contact:</span>
+              <p className="font-semibold text-gray-800 truncate">{partner.contactEmail}</p>
+            </div>
+            <div>
+              <span className="text-gray-500 font-medium">Current Plan:</span>
+              <p className="font-semibold text-[#8E25E3]">{partner.plan}</p>
+            </div>
+          </div>
+        </div>
 
-          <div>
-            <label className="block text-gray-700 font-bold mb-1">Plan</label>
-            <Select
-              value={partner.plan}
-              onValueChange={(val) => setPartner({ ...partner, plan: val as PlanType })}
-            >
-              <SelectTrigger className="w-full bg-[#FFFFFF] border-[#E5E7EB] rounded-md h-11 py-5 text-xs font-medium text-gray-700 cursor-pointer">
-                <SelectValue placeholder="Select Plan" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 text-xs font-medium text-gray-800 shadow-md">
-                <SelectItem value="Enterprise">Enterprise</SelectItem>
-                <SelectItem value="Professional">Professional</SelectItem>
-                <SelectItem value="Starter">Starter</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-bold mb-1">Status</label>
-            <Select
-              value={partner.status}
-              onValueChange={(val) => setPartner({ ...partner, status: val as PartnerStatus })}
-            >
-              <SelectTrigger className="w-full bg-[#FFFFFF] border-[#E5E7EB] rounded-md h-11 py-5 text-xs font-medium text-gray-700 cursor-pointer">
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 text-xs font-medium text-gray-800 shadow-md">
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Suspended">Suspended</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* The ONLY editable field: Status */}
+        <div className="space-y-1.5 text-xs">
+          <label className="block text-gray-800 font-bold">Account Status</label>
+          <Select
+            value={partner.status}
+            onValueChange={(val) => setPartner({ ...partner, status: val as PartnerStatus })}
+          >
+            <SelectTrigger className="w-full bg-white border border-gray-300 rounded-xl h-11 text-xs font-semibold text-gray-800 cursor-pointer focus:ring-2 focus:ring-[#8E25E3]/40">
+              <SelectValue placeholder="Select Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-white border border-gray-200 text-xs font-medium text-gray-800 shadow-xl">
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Suspended">Suspended</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-gray-500">
+            Note: Only the partner status can be modified here.
+          </p>
         </div>
 
         <div className="pt-2 border-t border-gray-200 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 border border-gray-300 text-gray-700 font-semibold text-xs rounded-md hover:bg-gray-100 cursor-pointer"
+            className="px-4 py-2.5 border border-gray-300 text-gray-700 font-semibold text-xs rounded-xl hover:bg-gray-100 cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2.5 bg-[#8E25E3] text-white font-semibold text-xs rounded-md shadow-xs cursor-pointer"
+            className="px-5 py-2.5 bg-[#8E25E3] hover:bg-[#7b1fc9] text-white font-semibold text-xs rounded-xl shadow-xs cursor-pointer transition-colors"
           >
-            Save Changes
+            Update Status
           </button>
         </div>
       </form>

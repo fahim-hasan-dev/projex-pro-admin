@@ -1,13 +1,15 @@
 "use client";
 
 import React from "react";
-import { CheckCheck, Trash2 } from "lucide-react";
+import { CheckCheck, Trash2, RefreshCw } from "lucide-react";
 
 interface NotificationHeaderProps {
   unreadCount: number;
   totalCount: number;
   onMarkAllAsRead: () => void;
   onClearAll: () => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export default function NotificationHeader({
@@ -15,6 +17,8 @@ export default function NotificationHeader({
   totalCount,
   onMarkAllAsRead,
   onClearAll,
+  onRefresh,
+  isRefreshing = false,
 }: NotificationHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -35,6 +39,19 @@ export default function NotificationHeader({
       </div>
 
       <div className="flex items-center gap-2">
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="bg-[#FFFFFF] hover:bg-gray-50 text-gray-700 font-medium px-3.5 py-2 rounded-md border border-[#E5E7EB] text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+            title="Refresh notifications"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-[#8E25E3]" : "text-gray-500"}`} />
+            <span>Refresh</span>
+          </button>
+        )}
+
         {unreadCount > 0 && (
           <button
             type="button"
@@ -56,7 +73,6 @@ export default function NotificationHeader({
             <span>Clear all</span>
           </button>
         )}
-
       </div>
     </div>
   );

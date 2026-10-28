@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { FilterTab } from "@/components/maintenance-requests/types";
 import {
+  FilterTab,
   PriorityLevel,
   ServiceCategory,
-} from "@/types/serviceRequestStore";
+} from "@/components/maintenance-requests/types";
 import {
   useGetAllServicesRequestQuery,
   useAssignServiceProvideByAdminMutation,
@@ -42,19 +42,41 @@ export default function MaintenanceRequestsPage() {
   const [newPriority, setNewPriority] = useState<PriorityLevel>("Medium");
   const [newBasePay, setNewBasePay] = useState<number>(200);
 
-  // Fetch Service Requests via API: GET /service-request
+  // Backend Status Mapping
+  const backendStatus =
+    activeTab === "Pending"
+      ? "Pending"
+      : activeTab === "Assigned"
+      ? "Assigned"
+      : activeTab === "In Progress"
+      ? "In Progress,Accepted,Pending Approval"
+      : activeTab === "Completed"
+      ? "Completed"
+      : activeTab === "Rejected"
+      ? "Rejected,Declined"
+      : activeTab === "Cancelled"
+      ? "Cancelled"
+      : undefined;
+
+  // Main paginated query via API: GET /service-request
   const { data: apiResponse, isLoading, isFetching, refetch } = useGetAllServicesRequestQuery({
     page: currentPage,
     limit: 10,
     search: searchQuery,
-    status: activeTab,
+    status: backendStatus,
+  });
+
+  // Query all service requests to dynamically calculate global stats & tab counts
+  const { data: allRequestsResponse } = useGetAllServicesRequestQuery({
+    limit: 1000,
   });
 
   const rawRequests = apiResponse?.data?.requests || [];
   const meta = apiResponse?.data?.meta;
 
-  // Map API response items to table item structure
-  const requests = rawRequests.map((req: any) => {
+  const allRawRequests = allRequestsResponse?.data?.requests || [];
+
+  const mapRequestItem = (req: any) => {
     const pmUser = req.user || {};
     const prop = req.property || {};
     const cat = prop.category || {};
@@ -71,7 +93,7 @@ export default function MaintenanceRequestsPage() {
           })
         : "N/A",
       propertyManager: pmUser.firstName ? `${pmUser.firstName} ${pmUser.lastName || ""}`.trim() : "N/A",
-      property: prop.name || "Unknown Property",
+      property: prop.name || prop.title || "Property",
       address: prop.address || "",
       issue: req.issueTitle || req.description || "Service Issue",
       type: cat.name || "Plumbing",
@@ -82,39 +104,52 @@ export default function MaintenanceRequestsPage() {
       priority: req.priority || "Medium",
       status: req.status || "Pending",
       basePay: req.basePayment || 0,
-      additionalFee: 0,
+      additionalFee: req.specializedRate?.isActive ? (req.specializedRate?.value || 0) : 0,
       notes: req.description || "",
       etaDate: req.eta ? new Date(req.eta).toLocaleDateString() : "Pending",
       tenantName: req.tenantName || "",
       tenantPhone: req.tenantPhone || "",
+      declineReason: req.rejectionReason || req.declineReason || "",
+      isSpecialized: Boolean(req.specializedRate?.isActive),
+      rateBonus: req.specializedRate?.value || 0,
+      specializedRate: req.specializedRate,
       extraWorkRequests: [],
       raw: req,
     };
-  });
+  };
 
-  // Client side search filtering fallback
+  const requests = rawRequests.map(mapRequestItem);
+  const allRequests = allRawRequests.map(mapRequestItem);
+
+  // Client side search fallback if needed
   const filteredRequests = requests.filter((r: any) => {
-    const matchesSearch =
+    if (!searchQuery) return true;
+    return (
       r.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.issue.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.contractor.toLowerCase().includes(searchQuery.toLowerCase());
-
-    let matchesTab = true;
-    if (activeTab === "Pending") matchesTab = r.status === "Pending";
-    else if (activeTab === "In Progress")
-      matchesTab = r.status === "In Progress" || r.status === "Accepted" || r.status === "Assigned";
-    else if (activeTab === "Reassignment")
-      matchesTab = r.status === "Reassignment Requested";
-    else if (activeTab === "Scheduled") matchesTab = r.status === "Assigned";
-    else if (activeTab === "Completed") matchesTab = r.status === "Completed";
-    else if (activeTab === "Cancelled") matchesTab = r.status === "Cancelled";
-
-    return matchesSearch && matchesTab;
+      r.contractor.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
+
+  const handleTabChange = (tab: FilterTab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
   // Open Job Modal Handler
   const handleOpenJobModal = (job: any) => {
+    const status = job.status || job.raw?.status;
+    const canAssign = status === "Pending" || status === "Rejected" || status === "Declined";
+    if (!canAssign) {
+      toast.error(`Cannot assign provider. Request is currently "${status}". Only Pending or Rejected requests can be assigned.`);
+      return;
+    }
     setSelectedJobForAssign(job);
     setAssignedContractor(job.contractor || "Unassigned");
   };
@@ -127,6 +162,14 @@ export default function MaintenanceRequestsPage() {
   // Save Assignment Handler
   const handleSaveJobAssignment = async (updatedFields: any) => {
     if (!selectedJobForAssign) return;
+
+    const status = selectedJobForAssign.status || selectedJobForAssign.raw?.status;
+    const canAssign = status === "Pending" || status === "Rejected" || status === "Declined";
+    if (!canAssign) {
+      toast.error(`Cannot assign provider. Request is in "${status}" status.`);
+      setSelectedJobForAssign(null);
+      return;
+    }
 
     try {
       const targetId = selectedJobForAssign._id || selectedJobForAssign.id;
@@ -163,42 +206,46 @@ export default function MaintenanceRequestsPage() {
       <MaintenanceRequestsHeader onOpenNewRequest={() => setShowNewRequestModal(true)} />
 
       {/* Stats Cards */}
-      <MaintenanceRequestsStats requests={requests} />
+      <MaintenanceRequestsStats requests={allRequests.length > 0 ? allRequests : requests} />
 
       {/* Filter Tabs & Search Bar */}
       <MaintenanceRequestsFilterBar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        requests={requests}
+        setSearchQuery={handleSearchChange}
+        requests={allRequests.length > 0 ? allRequests : requests}
       />
 
       {/* Table */}
       {isLoading || isFetching ? (
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-[#6B1294]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#8E25E3]" />
           <p className="text-sm font-semibold text-gray-700">Loading Service Requests via API...</p>
-          <span className="text-xs font-mono text-gray-400">GET /service-request</span>
         </div>
       ) : (
-        <MaintenanceRequestsTable
-          requests={filteredRequests}
-          handleOpenJobModal={handleOpenJobModal}
-          handleOpenDetailsModal={handleOpenDetailsModal}
-        />
-      )}
-
-      {/* Pagination */}
-      {meta && meta.totalPage > 1 && (
-        <div className="flex justify-end pt-2">
-          <PaginationComponent
-            totalItems={meta.total}
-            itemsPerPage={meta.limit}
-            initialPage={meta.page}
-            onPageChange={(page) => setCurrentPage(page)}
+        <>
+          <MaintenanceRequestsTable
+            requests={filteredRequests}
+            handleOpenJobModal={handleOpenJobModal}
+            handleOpenDetailsModal={handleOpenDetailsModal}
           />
-        </div>
+
+          {/* Pagination & Count Info */}
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500 font-medium px-1">
+            <div>
+              Showing {filteredRequests.length} of {meta?.total ?? filteredRequests.length} service requests
+            </div>
+            {meta && meta.total > 10 && (
+              <PaginationComponent
+                totalItems={meta.total}
+                itemsPerPage={meta.limit || 10}
+                initialPage={currentPage}
+                onPageChange={(page) => setCurrentPage(page)}
+              />
+            )}
+          </div>
+        </>
       )}
 
       {/* Job & Provider Assignment Modal */}

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Edit, Eye, Mail, MapPin, Trash2 } from "lucide-react";
-import { PlanType, PropertyPartner } from "./types";
+import { PlanType, PropertyPartner, PartnerStatus } from "./types";
 
 interface PropertyManagersTableProps {
   partners: PropertyPartner[];
@@ -18,14 +18,31 @@ export default function PropertyManagersTable({
   setDeletePartner,
 }: PropertyManagersTableProps) {
   const getPlanBadgeStyle = (plan: PlanType) => {
-    switch (plan) {
-      case "Enterprise":
-        return "bg-purple-100 text-[#8E25E3]";
-      case "Professional":
-        return "bg-blue-100 text-blue-700";
-      case "Starter":
-        return "bg-gray-200 text-gray-700";
+    const p = String(plan || "").toLowerCase();
+    if (p.includes("enterprise")) {
+      return "bg-purple-100 text-[#8E25E3]";
     }
+    if (p.includes("pro") || p.includes("professional")) {
+      return "bg-blue-100 text-blue-700";
+    }
+    if (p.includes("prime")) {
+      return "bg-amber-100 text-amber-700";
+    }
+    return "bg-gray-100 text-gray-700";
+  };
+
+  const getStatusBadge = (status: PartnerStatus) => {
+    const s = String(status || "").toLowerCase();
+    if (s === "active") {
+      return { dot: "bg-emerald-500", text: "text-emerald-600", label: "Active" };
+    }
+    if (s === "pending") {
+      return { dot: "bg-amber-500", text: "text-amber-600", label: "Pending" };
+    }
+    if (s === "rejected") {
+      return { dot: "bg-red-500", text: "text-red-600", label: "Rejected" };
+    }
+    return { dot: "bg-rose-500", text: "text-rose-600", label: "Suspended" };
   };
 
   return (
@@ -37,7 +54,7 @@ export default function PropertyManagersTable({
               <th className="py-4 px-5 font-medium">ID</th>
               <th className="py-4 px-5 font-medium">Property Name / Location</th>
               <th className="py-4 px-5 font-medium">Point of Contact</th>
-              <th className="py-4 px-5 font-medium">No of Units</th>
+              <th className="py-4 px-5 font-medium">No of Properties</th>
               <th className="py-4 px-5 font-medium">Plan</th>
               <th className="py-4 px-5 font-medium">Status</th>
               <th className="py-4 px-5 font-medium">Payment Type</th>
@@ -81,10 +98,10 @@ export default function PropertyManagersTable({
                     </div>
                   </td>
 
-                  {/* No of Units */}
+                  {/* No of Properties */}
                   <td className="py-4 px-5">
                     <div>
-                      <p className="font-bold text-gray-900 text-base leading-none">{item.noOfUnits}</p>
+                      <p className="font-bold text-gray-900 text-base leading-none">{item.noOfProperties ?? item.noOfUnits}</p>
                       <span className="text-[11px] text-gray-500 font-normal">properties</span>
                     </div>
                   </td>
@@ -102,27 +119,15 @@ export default function PropertyManagersTable({
 
                   {/* Status */}
                   <td className="py-4 px-5">
-                    <div className="flex items-center gap-1.5 font-semibold">
-                      <span
-                        className={`w-2 h-2 rounded-full ${item.status === "Active"
-                          ? "bg-emerald-500"
-                          : item.status === "Pending"
-                            ? "bg-amber-500"
-                            : "bg-red-500"
-                          }`}
-                      />
-                      <span
-                        className={
-                          item.status === "Active"
-                            ? "text-emerald-600"
-                            : item.status === "Pending"
-                              ? "text-amber-600"
-                              : "text-red-600"
-                        }
-                      >
-                        {item.status}
-                      </span>
-                    </div>
+                    {(() => {
+                      const sb = getStatusBadge(item.status);
+                      return (
+                        <div className="flex items-center gap-1.5 font-semibold">
+                          <span className={`w-2 h-2 rounded-full ${sb.dot}`} />
+                          <span className={sb.text}>{sb.label}</span>
+                        </div>
+                      );
+                    })()}
                   </td>
 
                   {/* Payment Type */}

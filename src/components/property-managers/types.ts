@@ -1,19 +1,21 @@
-import rawPartners from "@/data/propertyPartners.json";
-
-export type PlanType = "Enterprise" | "Professional" | "Starter";
-export type PartnerStatus = "Active" | "Pending" | "Suspended";
-export type PaymentType = "Invoice" | "Due upon Receipt" | "Milestone Payment";
+export type PlanType = "Enterprise" | "Professional" | "Starter" | "PRIME" | "PRO" | "Free" | string;
+export type PartnerStatus = "Active" | "Pending" | "Suspended" | "Rejected" | string;
+export type PaymentType = "Invoice" | "Due upon Receipt" | "Milestone Payment" | "Stripe Card" | "Direct Card" | string;
 
 export type PropertyPartner = {
   id: string;
+  rawId: string;
   propertyName: string;
   location: string;
   contactName: string;
   contactEmail: string;
+  contactPhone?: string;
   noOfUnits: number;
+  noOfProperties?: number;
   plan: PlanType;
   status: PartnerStatus;
   paymentType: PaymentType;
+  rawUser?: any;
 };
 
 export type StatItem = {
@@ -23,5 +25,3 @@ export type StatItem = {
   value: string;
   textColor: string;
 };
-
-export const initialPartnersList: PropertyPartner[] = rawPartners as PropertyPartner[];

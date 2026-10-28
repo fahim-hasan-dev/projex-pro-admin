@@ -30,14 +30,12 @@ export default function EditCategoryModal({
     }
   }, [category]);
 
-  const isSubcategory = Boolean(category?.parent);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!category?._id) return;
     if (!name.trim()) {
-      toast.error("Category name cannot be empty");
+      toast.error("Property sub-type name cannot be empty");
       return;
     }
 
@@ -48,14 +46,14 @@ export default function EditCategoryModal({
       }).unwrap();
 
       if (res?.success || res?.statusCode === 200) {
-        toast.success(res?.message || "Updated successfully!");
+        toast.success(res?.message || "Property sub-type updated successfully!");
         onClose();
       } else {
-        toast.error(res?.message || "Failed to update category");
+        toast.error(res?.message || "Failed to update property sub-type");
       }
     } catch (err: any) {
-      console.error("Update Category Error:", err);
-      toast.error(err?.data?.message || err?.message || "Failed to update category");
+      console.error("Update Sub-Type Error:", err);
+      toast.error(err?.data?.message || err?.message || "Failed to update property sub-type");
     }
   };
 
@@ -65,20 +63,23 @@ export default function EditCategoryModal({
         <DialogHeader className="pb-4 border-b border-gray-100">
           <DialogTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <Edit3 className="w-5 h-5 text-[#8E25E3]" />
-            Edit {isSubcategory ? "Subcategory" : "Category"}
+            Edit Property Sub-Type
           </DialogTitle>
+          <p className="text-xs text-gray-500 font-normal mt-0.5">
+            Modify the display name for this property sub-type
+          </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-1.5">
-            <Label htmlFor="editCatName" className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              {isSubcategory ? "Subcategory Name" : "Category Name"} <span className="text-red-500">*</span>
+            <Label htmlFor="editSubTypeName" className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Sub-Type Name <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="editCatName"
-              placeholder="Enter category name"
+              id="editSubTypeName"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Townhouse, Office Space"
               className="h-11 rounded-xl border-gray-200 text-sm focus:border-[#8E25E3] focus:ring-[#8E25E3]"
               required
             />

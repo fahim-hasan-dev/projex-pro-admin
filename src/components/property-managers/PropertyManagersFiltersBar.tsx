@@ -85,8 +85,8 @@ export default function PropertyManagersFiltersBar({
           <SelectContent className="bg-white border border-gray-200 text-xs font-medium text-gray-800 shadow-md">
             <SelectItem value="All Plans">All Plans</SelectItem>
             <SelectItem value="Enterprise">Enterprise</SelectItem>
-            <SelectItem value="Professional">Professional</SelectItem>
-            <SelectItem value="Starter">Starter</SelectItem>
+            <SelectItem value="Pro">ProjexPro Pro</SelectItem>
+            <SelectItem value="Prime">Prime</SelectItem>
           </SelectContent>
         </Select>
 

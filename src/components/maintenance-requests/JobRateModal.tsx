@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { X, MapPin, Calendar as CalendarIcon, Sliders } from "lucide-react";
+import { X, MapPin, Calendar as CalendarIcon, Sliders, AlertTriangle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -55,10 +55,13 @@ export default function JobRateModal({
   });
 
   const activeJob = singleJobResponse?.data || job?.raw || job;
+  const currentStatus = activeJob?.status || job?.status || "Pending";
+  const canAssign = currentStatus === "Pending" || currentStatus === "Rejected" || currentStatus === "Declined";
+  const isRejected = currentStatus === "Rejected" || currentStatus === "Declined";
 
   // Form states
   const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-  const [basePayInput, setBasePayInput] = useState<number>(250);
+  const [basePayInput, setBasePayInput] = useState<string>("250");
   const [scheduledDate, setScheduledDate] = useState<string>("Jun 27, 2026");
   const [statusInput, setStatusInput] = useState<string>("Pending");
 
@@ -72,13 +75,13 @@ export default function JobRateModal({
   useEffect(() => {
     if (activeJob) {
       // 1. Base Pay initialization
-      const base =
+      const rawBase =
         activeJob.basePayment !== undefined && activeJob.basePayment !== null
-          ? Number(activeJob.basePayment)
+          ? activeJob.basePayment
           : activeJob.basePay !== undefined && activeJob.basePay !== null
-          ? Number(activeJob.basePay)
-          : 250;
-      setBasePayInput(base);
+          ? activeJob.basePay
+          : "";
+      setBasePayInput(rawBase !== "" && rawBase !== null && rawBase !== undefined ? String(rawBase) : "");
 
       // 2. Scheduled Date (ETA) initialization & formatting
       const rawEta = activeJob.eta || activeJob.etaDate;
@@ -137,16 +140,17 @@ export default function JobRateModal({
 
   // Calculation for Specialized Job Rate
   const numericVal = parseFloat(rateValue) || 0;
+  const numericBasePay = parseFloat(basePayInput) || 0;
   let specializedAddon = 0;
   if (isSpecializedActive && numericVal > 0) {
     if (paymentType === "Percentage") {
-      specializedAddon = (basePayInput * numericVal) / 100;
+      specializedAddon = (numericBasePay * numericVal) / 100;
     } else {
       specializedAddon = numericVal;
     }
   }
 
-  const finalPayout = basePayInput + specializedAddon;
+  const finalPayout = numericBasePay + specializedAddon;
 
   const handleChipClick = (reason: string) => {
     if (selectedReason === reason) {
@@ -162,6 +166,11 @@ export default function JobRateModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!canAssign) {
+      toast.error(`Cannot assign provider. Request status is "${currentStatus}". Only Pending or Rejected requests can be assigned.`);
+      return;
+    }
+
     if (!selectedProviderId) {
       toast.error("Please select a service provider");
       return;
@@ -169,7 +178,7 @@ export default function JobRateModal({
 
     const payload = {
       assignedProvider: selectedProviderId,
-      basePayment: Number(basePayInput),
+      basePayment: numericBasePay,
       specializedRate: {
         isActive: isSpecializedActive,
         paymentType,
@@ -197,8 +206,14 @@ export default function JobRateModal({
               {activeJob.requestNo || activeJob.id || activeJob._id}
             </h2>
 
-            <span className="px-3 py-1 bg-purple-100 text-[#8E25E3] rounded-full text-xs font-bold flex items-center gap-1">
-              🔑 {activeJob.status || "In Progress"}
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+                isRejected
+                  ? "bg-red-100 text-red-700 border border-red-200"
+                  : "bg-purple-100 text-[#8E25E3]"
+              }`}
+            >
+              {isRejected ? <AlertTriangle className="w-3.5 h-3.5" /> : "🔑"} {currentStatus}
             </span>
 
             <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold">
@@ -217,6 +232,39 @@ export default function JobRateModal({
 
         {/* Content Body Grid */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 custom-scrollbar">
+
+          {/* Rejection Alert Banner */}
+          {isRejected && (
+            <div className="lg:col-span-2 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold text-red-900">
+                  Previous Provider Declined / Rejected This Job
+                </h4>
+                {activeJob?.rejectionReason && (
+                  <p className="text-xs text-red-700">
+                    <span className="font-semibold">Rejection Reason:</span> &quot;{activeJob.rejectionReason}&quot;
+                  </p>
+                )}
+                <p className="text-[11px] text-red-600">
+                  Please select a new service provider below to reassign this service request.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Locked Status Banner if !canAssign */}
+          {!canAssign && (
+            <div className="lg:col-span-2 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold text-amber-900">Assignment Not Allowed</h4>
+                <p className="text-xs text-amber-800">
+                  This job is currently in <strong className="font-semibold">&quot;{currentStatus}&quot;</strong> status. According to workflow rules, provider assignment can only be made when a job is <strong>Pending</strong> or when a previously assigned provider has <strong>Rejected</strong> it.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* LEFT COLUMN: JOB DETAILS */}
           <div className="space-y-4">
@@ -315,6 +363,7 @@ export default function JobRateModal({
               <Select
                 value={selectedProviderId}
                 onValueChange={(val) => setSelectedProviderId(val)}
+                disabled={!canAssign}
               >
                 <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl py-5 px-3.5 text-xs font-medium text-gray-800 focus:ring-[#8E25E3]">
                   <SelectValue
@@ -347,8 +396,9 @@ export default function JobRateModal({
                 <input
                   type="number"
                   min={0}
+                  placeholder="0"
                   value={basePayInput}
-                  onChange={(e) => setBasePayInput(Number(e.target.value))}
+                  onChange={(e) => setBasePayInput(e.target.value)}
                   className="w-full bg-white border border-gray-200 rounded-xl pl-7 pr-3 py-2.5 text-xs font-bold text-gray-900 focus:border-[#8E25E3] focus:ring-[#8E25E3]"
                 />
               </div>
@@ -490,7 +540,7 @@ export default function JobRateModal({
 
               <div className="flex items-center justify-between text-xs text-gray-700">
                 <span>Base Payment</span>
-                <span className="font-bold text-gray-900">${basePayInput.toLocaleString()}</span>
+                <span className="font-bold text-gray-900">${numericBasePay.toLocaleString()}</span>
               </div>
 
               {isSpecializedActive && (
@@ -528,9 +578,14 @@ export default function JobRateModal({
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-[#8E25E3] hover:bg-[#7b1ed0] text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+              disabled={!canAssign}
+              className={`px-6 py-2.5 font-bold text-xs rounded-xl shadow-md transition-all ${
+                !canAssign
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
+                  : "bg-[#8E25E3] hover:bg-[#7b1ed0] text-white cursor-pointer"
+              }`}
             >
-              Save & Assign
+              {isRejected ? "Save & Reassign" : "Save & Assign"}
             </button>
           </div>
         </form>

@@ -1,24 +1,34 @@
-export type PriorityLevel = "Critical" | "High" | "Medium" | "Low";
-export type JobStatus = "In Progress" | "Pending" | "Assigned" | "Completed" | "Cancelled";
-export type ServiceCategory = "Plumbing" | "Electrical" | "HVAC" | "Cleaning" | "Painting";
-export type FilterTab = "All Requests" | "Pending" | "In Progress" | "Reassignment" | "Scheduled" | "Completed" | "Cancelled";
+export type PriorityLevel = "Critical" | "High" | "Medium" | "Low" | "Urgent";
+export type JobStatus = "Pending" | "Assigned" | "Accepted" | "In Progress" | "Pending Approval" | "Completed" | "Rejected" | "Cancelled" | string;
+export type ServiceCategory = "Plumbing" | "Electrical" | "HVAC" | "Cleaning" | "Painting" | string;
+export type FilterTab = "All Requests" | "Pending" | "Assigned" | "In Progress" | "Completed" | "Rejected" | "Cancelled";
 
 export type ServiceRequestItem = {
+  _id?: string;
   id: string;
   date: string;
   property: string;
+  propertyManager?: string;
   address: string;
   issue: string;
   type: ServiceCategory;
   contractor: string;
+  contractorPhone?: string;
   priority: PriorityLevel;
   status: JobStatus;
   basePay: number;
-  rateBonus?: string;
+  rateBonus?: string | number;
+  additionalFee?: number;
+  specializedRate?: any;
   finalPayCalculated?: number;
   notes: string;
   etaDate: string;
   isSpecialized?: boolean;
+  tenantName?: string;
+  tenantPhone?: string;
+  declineReason?: string;
+  extraWorkRequests?: any[];
+  raw?: any;
 };
 
 export const initialRequestsList: ServiceRequestItem[] = [

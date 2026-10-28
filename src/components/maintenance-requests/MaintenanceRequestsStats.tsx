@@ -8,9 +8,11 @@ interface MaintenanceRequestsStatsProps {
 }
 
 export default function MaintenanceRequestsStats({ requests }: MaintenanceRequestsStatsProps) {
-  const criticalCount = requests.filter((r) => r.priority === "Critical").length;
-  const inProgressCount = requests.filter((r) => r.status === "In Progress").length;
-  const pendingAssignmentCount = requests.filter((r) => r.contractor === "Unassigned" || r.status === "Pending").length;
+  const criticalCount = requests.filter((r) => r.priority === "Critical" || r.priority === "Urgent").length;
+  const inProgressCount = requests.filter(
+    (r) => r.status === "In Progress" || r.status === "Accepted" || r.status === "Pending Approval"
+  ).length;
+  const pendingAssignmentCount = requests.filter((r) => r.status === "Pending" || r.contractor === "Unassigned").length;
   const specializedCount = requests.filter((r) => r.isSpecialized || !!r.rateBonus).length;
 
   return (

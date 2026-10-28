@@ -1,69 +1,120 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
-import { NotificationCategory, NotificationItemType } from "@/types/notification";
+import {
+  NotificationCategory,
+  NotificationItemType,
+  BackendNotificationItem,
+} from "@/types/notification";
 import NotificationHeader from "@/components/notifications/NotificationHeader";
 import NotificationFilters from "@/components/notifications/NotificationFilters";
 import NotificationList from "@/components/notifications/NotificationList";
+import { useGetNotificationsQuery } from "@/features/notification/notificationApi";
 
-const initialNotifications: NotificationItemType[] = [
-  {
-    id: "NOTIF-101",
-    title: "New Service Request Submitted",
-    message: "Leaking faucet in master bathroom reported at Maple Residences (SR-1298).",
-    category: "service_request",
-    timestamp: "10 minutes ago",
-    read: false,
-    link: "/maintenance-requests",
-    actionText: "View Request",
-  },
-  {
-    id: "NOTIF-102",
-    title: "High Value Rent Invoice Paid",
-    message: "Monthly rent payment of $12,600 received from Sunrise Holdings (TXN-8843).",
-    category: "invoice",
-    timestamp: "1 hour ago",
-    read: false,
-    link: "/invoices",
-    actionText: "View Invoice",
-  },
-  {
-    id: "NOTIF-103",
-    title: "Property Manager Pending Approval",
-    message: "David Miller registered a new property manager account and requires review.",
-    category: "property",
-    timestamp: "3 hours ago",
-    read: true,
-    link: "/property-manager-approval",
-    actionText: "Review Manager",
-  },
-  {
-    id: "NOTIF-104",
-    title: "Provider Application Under Review",
-    message: "Alex Kumar submitted license documents for HVAC service provider role.",
-    category: "service_request",
-    timestamp: "5 hours ago",
-    read: true,
-    link: "/provider",
-    actionText: "Check Application",
-  },
-  {
-    id: "NOTIF-105",
-    title: "System Maintenance Scheduled",
-    message: "Routine database optimization and cloud server backup scheduled for midnight.",
-    category: "system",
-    timestamp: "1 day ago",
-    read: true,
-  },
-];
+const formatTimeAgo = (dateStr?: string) => {
+  if (!dateStr) return "Just now";
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHr / 24);
+
+    if (diffSec < 60) return "Just now";
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHr < 24) return `${diffHr}h ago`;
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  } catch {
+    return dateStr;
+  }
+};
+
+const mapBackendToUI = (item: BackendNotificationItem): NotificationItemType => {
+  let category: "service_request" | "invoice" | "property" | "system" = "system";
+  let link = "/request";
+  let actionText = "View Details";
+
+  const lowerTitle = (item.title || "").toLowerCase();
+  const lowerMessage = (item.message || "").toLowerCase();
+  const screen = (item.screen || "").toUpperCase();
+
+  if (
+    screen.includes("SERVICE_REQUEST") ||
+    lowerTitle.includes("request") ||
+    lowerTitle.includes("service") ||
+    lowerMessage.includes("service request")
+  ) {
+    category = "service_request";
+    link = "/request";
+    actionText = "View Request";
+  } else if (
+    screen.includes("INVOICE") ||
+    screen.includes("PAYMENT") ||
+    lowerTitle.includes("invoice") ||
+    lowerTitle.includes("paid") ||
+    lowerTitle.includes("payment")
+  ) {
+    category = "invoice";
+    link = "/invoices";
+    actionText = "View Invoice";
+  } else if (
+    screen.includes("PROPERTY") ||
+    screen.includes("PARTNER") ||
+    lowerTitle.includes("property") ||
+    lowerTitle.includes("manager") ||
+    lowerTitle.includes("partner")
+  ) {
+    category = "property";
+    link = "/property-managers";
+    actionText = "View Partner";
+  } else if (
+    screen.includes("PROVIDER") ||
+    lowerTitle.includes("provider") ||
+    lowerMessage.includes("provider")
+  ) {
+    category = "service_request";
+    link = "/provider";
+    actionText = "View Provider";
+  }
+
+  return {
+    id: item._id,
+    title: item.title,
+    message: item.message,
+    category,
+    timestamp: formatTimeAgo(item.createdAt),
+    read: item.read ?? false,
+    link,
+    actionText,
+    raw: item,
+  };
+};
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<NotificationItemType[]>(initialNotifications);
+  const { data, isLoading, isFetching, refetch } = useGetNotificationsQuery({
+    limit: 50,
+  });
+
+  const [notifications, setNotifications] = useState<NotificationItemType[]>([]);
   const [activeTab, setActiveTab] = useState<NotificationCategory>("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const unreadCount = notifications.filter((item) => !item.read).length;
+  // Sync notifications from API response
+  useEffect(() => {
+    const backendItems: BackendNotificationItem[] = data?.data?.notifications || [];
+    if (backendItems.length > 0) {
+      setNotifications(backendItems.map(mapBackendToUI));
+    }
+  }, [data]);
+
+  const unreadCount = useMemo(() => {
+    return notifications.filter((item) => !item.read).length;
+  }, [notifications]);
 
   const handleMarkAsRead = (id: string) => {
     setNotifications((prev) =>
@@ -87,17 +138,22 @@ export default function NotificationsPage() {
   };
 
   // Filter & Search Logic
-  const filteredNotifications = notifications.filter((item) => {
-    const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.message.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredNotifications = useMemo(() => {
+    return notifications.filter((item) => {
+      const matchesSearch =
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.message.toLowerCase().includes(searchTerm.toLowerCase());
 
-    let matchesTab = true;
-    if (activeTab === "unread") matchesTab = !item.read;
-    else if (activeTab !== "all") matchesTab = item.category === activeTab;
+      let matchesTab = true;
+      if (activeTab === "unread") {
+        matchesTab = !item.read;
+      } else if (activeTab !== "all") {
+        matchesTab = item.category === activeTab;
+      }
 
-    return matchesSearch && matchesTab;
-  });
+      return matchesSearch && matchesTab;
+    });
+  }, [notifications, activeTab, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -107,6 +163,8 @@ export default function NotificationsPage() {
         totalCount={notifications.length}
         onMarkAllAsRead={handleMarkAllAsRead}
         onClearAll={handleClearAll}
+        onRefresh={() => refetch()}
+        isRefreshing={isFetching}
       />
 
       {/* Filter Tabs & Search Bar */}
@@ -121,6 +179,7 @@ export default function NotificationsPage() {
       {/* Notifications List */}
       <NotificationList
         notifications={filteredNotifications}
+        isLoading={isLoading}
         onMarkAsRead={handleMarkAsRead}
         onDelete={handleDelete}
       />

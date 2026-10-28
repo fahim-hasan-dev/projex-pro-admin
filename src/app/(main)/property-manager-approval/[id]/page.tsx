@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
-  useGetPropertyManagerQuery,
+  useGetSingleUserQuery,
   useApproveRejectUserByAdminMutation,
 } from "@/features/user_management/userApi";
 
@@ -31,12 +31,13 @@ export default function PropertyManagerApprovalDetailPage({ params }: PageProps)
   const resolvedParams = use(params);
   const targetId = resolvedParams.id;
 
-  // Fetch users via API
-  const { data: apiResponse, isLoading, isFetching } = useGetPropertyManagerQuery({});
+  // Fetch single user directly via GET /api/v1/user/:id
+  const { data: singleUserResponse, isLoading, isFetching } = useGetSingleUserQuery(targetId, {
+    skip: !targetId,
+  });
   const [approveRejectUser, { isLoading: isSubmitting }] = useApproveRejectUserByAdminMutation();
 
-  const allUsers: any[] = apiResponse?.data?.users || [];
-  const user = allUsers.find((u) => u._id === targetId) || allUsers[0];
+  const user = singleUserResponse?.data || singleUserResponse?.user;
 
   const [activeActionView, setActiveActionView] = useState<"default" | "reject_note">("default");
   const [rejectionNote, setRejectionNote] = useState("");
@@ -78,10 +79,12 @@ export default function PropertyManagerApprovalDetailPage({ params }: PageProps)
   const roleTitle = profile.jobTitle || "Property Manager";
   const email = profile.businessEmail || user.email || "N/A";
   const phone = profile.businessPhone || user.contactNumber || user.phone || "N/A";
-  const city = profile.city || "N/A";
-  const state = profile.state || "N/A";
-  const location = city !== "N/A" && state !== "N/A" ? `${city}, ${state}` : city !== "N/A" ? city : state !== "N/A" ? state : "N/A";
-  const portfolioUnits = profile.portfolioSize || (user.totalUnitsUsed ? `${user.totalUnitsUsed} Units` : "N/A");
+  const businessAddress = profile.businessAddress || "";
+  const city = profile.city || "";
+  const state = profile.state || "";
+  const zipCode = profile.zipCode || "";
+  const location = [businessAddress, city, state, zipCode].filter(Boolean).join(", ") || (city && state ? `${city}, ${state}` : city || state || "N/A");
+  const portfolioUnits = profile.portfolioSize || (user.calculatedUnits || user.totalUnitsUsed ? `${user.calculatedUnits || user.totalUnitsUsed} Units` : (user.propertyCount ? `${user.propertyCount} Properties` : "N/A"));
   const maintenanceType = profile.maintenanceInfrastructure || "Outsourced to third-party vendors";
   const submittedDate = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString("en-US", {
@@ -94,6 +97,7 @@ export default function PropertyManagerApprovalDetailPage({ params }: PageProps)
   const currentApprovalStatus = (user.approvalStatus || user.status || "pending").toLowerCase();
   const isApproved = currentApprovalStatus === "approved";
   const isRejected = currentApprovalStatus === "rejected";
+  const isResubmitted = currentApprovalStatus === "resubmitted";
   const isProcessed = isApproved || isRejected;
 
   const avatarChar = companyName.charAt(0).toUpperCase() || "P";
@@ -198,17 +202,21 @@ export default function PropertyManagerApprovalDetailPage({ params }: PageProps)
                 ? "bg-emerald-100 text-emerald-800 border-emerald-200"
                 : isRejected
                   ? "bg-red-100 text-red-800 border-red-200"
-                  : "bg-amber-100 text-amber-800 border-amber-200"
+                  : isResubmitted
+                    ? "bg-blue-100 text-blue-800 border-blue-200"
+                    : "bg-amber-100 text-amber-800 border-amber-200"
               }`}
           >
             {isApproved ? (
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             ) : isRejected ? (
               <XCircle className="w-3.5 h-3.5 text-red-600" />
+            ) : isResubmitted ? (
+              <Clock className="w-3.5 h-3.5 text-blue-600" />
             ) : (
               <Clock className="w-3.5 h-3.5 text-amber-600" />
             )}
-            <span>{currentApprovalStatus}</span>
+            <span>{isResubmitted ? "Resubmitted" : currentApprovalStatus}</span>
           </span>
         </div>
       </div>

@@ -60,6 +60,9 @@ export default function ViewRequestDetailsModal({
 
   const images: string[] = singleData?.images || [];
 
+  const canAssign = singleData?.status === "Pending" || singleData?.status === "Rejected" || singleData?.status === "Declined";
+  const isRejected = singleData?.status === "Rejected" || singleData?.status === "Declined";
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-5">
       <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border border-gray-200 animate-in fade-in zoom-in-95 duration-150">
@@ -108,10 +111,32 @@ export default function ViewRequestDetailsModal({
             <>
               {/* Header Info Badges */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-3">
+                <div
+                  className={`border rounded-xl p-3 ${
+                    isRejected
+                      ? "bg-red-50/80 border-red-200"
+                      : singleData?.status === "Assigned"
+                      ? "bg-purple-50/70 border-purple-200"
+                      : singleData?.status === "Completed"
+                      ? "bg-emerald-50/70 border-emerald-200"
+                      : "bg-purple-50/70 border-purple-100"
+                  }`}
+                >
                   <span className="text-[10px] font-bold text-gray-400 uppercase">Status</span>
-                  <p className="font-bold text-[#6B1294] text-sm mt-0.5 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
+                  <p
+                    className={`font-bold text-sm mt-0.5 flex items-center gap-1.5 ${
+                      isRejected
+                        ? "text-red-700"
+                        : singleData?.status === "Completed"
+                        ? "text-emerald-700"
+                        : "text-[#6B1294]"
+                    }`}
+                  >
+                    {isRejected ? (
+                      <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                    ) : (
+                      <Clock className="w-3.5 h-3.5" />
+                    )}
                     {singleData?.status || "Pending"}
                   </p>
                 </div>
@@ -241,11 +266,35 @@ export default function ViewRequestDetailsModal({
               </div>
 
               {/* Assigned Provider Info */}
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-2 text-xs">
-                <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2 border-b border-gray-200 pb-2">
-                  <ShieldCheck className="w-4 h-4 text-[#6B1294]" />
-                  Assigned Service Provider
-                </h4>
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-3 text-xs">
+                <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                  <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-[#6B1294]" />
+                    Assigned Service Provider
+                  </h4>
+                  {isRejected && (
+                    <span className="px-2.5 py-0.5 bg-red-100 text-red-700 font-bold text-[11px] rounded-full border border-red-200 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Rejected by Provider
+                    </span>
+                  )}
+                </div>
+
+                {/* Show Rejection Notice & Reason if rejected */}
+                {isRejected && singleData?.rejectionReason && (
+                  <div className="bg-red-50/90 border border-red-200 rounded-xl p-3 text-red-800 space-y-1">
+                    <p className="font-bold text-xs flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                      Provider Rejection Reason:
+                    </p>
+                    <p className="text-xs italic pl-5">
+                      &quot;{singleData.rejectionReason}&quot;
+                    </p>
+                    <p className="text-[11px] text-red-600 pl-5">
+                      This job requires reassigning to another available service provider.
+                    </p>
+                  </div>
+                )}
 
                 {providerInfo ? (
                   <div className="flex items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-gray-200">
@@ -256,23 +305,57 @@ export default function ViewRequestDetailsModal({
                       <p className="text-gray-500 font-normal">{providerInfo.email}</p>
                       <p className="text-gray-500 font-normal">{providerInfo.contactNumber || providerInfo.phone}</p>
                     </div>
-                    <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full border border-emerald-200">
-                      Assigned
-                    </span>
+                    <div>
+                      {isRejected ? (
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-1 bg-red-100 text-red-800 font-bold text-xs rounded-full border border-red-200">
+                            Rejected
+                          </span>
+                          {onOpenAssignModal && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onClose();
+                                onOpenAssignModal(singleData);
+                              }}
+                              className="px-3 py-1.5 bg-[#6B1294] hover:bg-[#580e7a] text-white font-semibold text-xs rounded-lg shadow-xs cursor-pointer"
+                            >
+                              Reassign
+                            </button>
+                          )}
+                        </div>
+                      ) : singleData?.status === "Assigned" ? (
+                        <span className="px-3 py-1 bg-purple-100 text-[#6B1294] font-bold text-xs rounded-full border border-purple-200">
+                          Assigned (Awaiting Acceptance)
+                        </span>
+                      ) : singleData?.status === "Accepted" || singleData?.status === "In Progress" ? (
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 font-bold text-xs rounded-full border border-blue-200">
+                          Accepted & Active
+                        </span>
+                      ) : singleData?.status === "Completed" ? (
+                        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full border border-emerald-200">
+                          Completed
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full border border-emerald-200">
+                          {singleData?.status || "Assigned"}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 flex items-center justify-between">
                     <p className="text-amber-800 font-semibold text-xs">
                       No service provider assigned yet.
                     </p>
-                    {onOpenAssignModal && (
+                    {onOpenAssignModal && canAssign && (
                       <button
                         type="button"
                         onClick={() => {
                           onClose();
                           onOpenAssignModal(singleData);
                         }}
-                        className="px-3 py-1.5 bg-[#6B1294] hover:bg-[#580e7a] text-white font-semibold text-xs rounded-lg shadow-xs"
+                        className="px-3 py-1.5 bg-[#6B1294] hover:bg-[#580e7a] text-white font-semibold text-xs rounded-lg shadow-xs cursor-pointer"
                       >
                         Assign Provider
                       </button>
@@ -340,7 +423,7 @@ export default function ViewRequestDetailsModal({
             Close Details
           </button>
 
-          {onOpenAssignModal && (
+          {onOpenAssignModal && canAssign ? (
             <button
               type="button"
               onClick={() => {
@@ -350,8 +433,27 @@ export default function ViewRequestDetailsModal({
               className="px-5 py-2.5 bg-[#6B1294] hover:bg-[#580e7a] text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <Wrench className="w-4 h-4" />
-              <span>Review & Assign Job</span>
+              <span>{isRejected ? "Reassign Provider" : "Review & Assign Job"}</span>
             </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-gray-500">Status:</span>
+              <span
+                className={`px-3 py-1 font-bold text-xs rounded-full border ${
+                  singleData?.status === "Assigned"
+                    ? "bg-purple-100 text-[#6B1294] border-purple-200"
+                    : singleData?.status === "In Progress" || singleData?.status === "Accepted"
+                    ? "bg-blue-100 text-blue-800 border-blue-200"
+                    : singleData?.status === "Completed"
+                    ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                    : "bg-gray-200 text-gray-700 border-gray-300"
+                }`}
+              >
+                {singleData?.status === "Assigned"
+                  ? "Assigned (Awaiting Acceptance)"
+                  : singleData?.status || "N/A"}
+              </span>
+            </div>
           )}
         </div>
       </div>
