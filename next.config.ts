@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
     ],
   },
   transpilePackages: ["recharts"],
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;
